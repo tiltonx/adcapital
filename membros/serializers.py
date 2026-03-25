@@ -20,3 +20,8 @@ class MembroSerializer(serializers.ModelSerializer):
         # Busca parentescos onde este membro é a origem
         relacoes = Parentesco.objects.filter(membro_origem=obj)
         return ParentescoDetalheSerializer(relacoes, many=True).data
+
+    def validate_email(self, value):
+        if value == "":
+            return None
+        return value
