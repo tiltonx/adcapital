@@ -11,6 +11,7 @@ class Transacao(models.Model):
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     categoria = models.CharField(max_length=100) # Ex: Dízimo, Aluguel
     data = models.DateField()
+    comprovante = models.FileField(upload_to='comprovantes/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.tipo} - {self.descricao}"

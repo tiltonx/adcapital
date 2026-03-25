@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     # Bibliotecas
     'corsheaders',
     'rest_framework',
+    'cloudinary_storage',
+    'cloudinary',
 
     # Suas Apps (Organizadas)
     'membros', 
@@ -149,3 +151,11 @@ if FRONTEND_URL:
     CORS_ALLOW_ALL_ORIGINS = False
 else:
     CORS_ALLOW_ALL_ORIGINS = True # Local development fall-back
+
+# Cloudinary Media Storage Config
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
+}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
