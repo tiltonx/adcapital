@@ -5,6 +5,7 @@ import DashboardHome from './components/Apresentacao/DashboardHome'
 import FinanceiroMain from './components/Financeiro/FinanceiroMain'
 import { useCategoriasFinanceiras } from './components/Financeiro/useCategoriasFinanceiras'
 import { useFinanceiro } from './components/Financeiro/useFinanceiro'
+import AgendaPage from './components/Agenda/AgendaPage'
 
 function App() {
   const { membros, membrosFiltrados, busca, setBusca, funcoes, graus, carregarDados } = useMembros();
@@ -35,6 +36,7 @@ function App() {
           <button onClick={() => setTelaAtiva('home')} className={`pb-1 transition-all ${telaAtiva === 'home' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Início</button>
           <button onClick={() => setTelaAtiva('membros')} className={`pb-1 transition-all ${telaAtiva === 'membros' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Membros</button>
           <button onClick={() => setTelaAtiva('financeiro')} className={`pb-1 transition-all ${telaAtiva === 'financeiro' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Financeiro</button>
+          <button onClick={() => setTelaAtiva('agenda')} className={`pb-1 transition-all ${telaAtiva === 'agenda' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Agenda</button>
         </div>
       </nav>
 
@@ -79,6 +81,10 @@ function App() {
             adicionarCategoriaEntrada={adicionarCategoriaEntrada}
             adicionarCategoriaSaida={adicionarCategoriaSaida}
           />
+        )}
+
+        {telaAtiva === 'agenda' && (
+          <AgendaPage />
         )}
       </main>
     </div>

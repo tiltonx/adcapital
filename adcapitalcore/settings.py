@@ -52,9 +52,10 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
 
-    # Suas Apps (Organizadas)
+    # Meus Apps
     'membros', 
     'financeiro',
+    'agenda',
 ]
 
 MIDDLEWARE = [

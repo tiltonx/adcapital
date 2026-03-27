@@ -14,3 +14,6 @@ dist-ssr/
 # Editor
 .vscode/
 .idea/
+
+# Google Cloud
+google_credentials.json
