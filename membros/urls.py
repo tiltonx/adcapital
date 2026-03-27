@@ -8,6 +8,7 @@ router.register(r'membros', MembroViewSet)
 
 urlpatterns = [
     path('opcoes-funcao/', buscar_opcoes_funcao, name='opcoes-funcao'),
+    path('funcoes/<int:pk>/', excluir_funcao, name='excluir-funcao'),
     path('opcoes-parentesco/', buscar_opcoes_parentesco, name='opcoes-parentesco'),
     path('', include(router.urls)),
 ]

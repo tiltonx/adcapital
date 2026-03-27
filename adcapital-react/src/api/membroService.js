@@ -15,8 +15,9 @@ const membroService = {
     // Remove um membro pelo ID (/api/membros/1/)
     excluir: (id) => api.delete(`/membros/${id}/`),
 
-    // Busca as opções de funções e graus cadastradas no backend
+    // Administração de Funções
     getFuncoes: () => api.get('/opcoes-funcao/'),
+    excluirFuncao: (id) => api.delete(`/funcoes/${id}/`),
     getGraus: () => api.get('/opcoes-parentesco/')
 };
 

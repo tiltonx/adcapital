@@ -47,6 +47,10 @@ class MembroSerializer(serializers.ModelSerializer):
         return ParentescoDetalheSerializer(relacoes, many=True).data
 
     def validate_email(self, value):
-        if value == "":
-            return None
-        return value
+        return value if value else None
+
+    def validate_data_entrada(self, value):
+        return value if value else None
+
+    def validate_data_saida(self, value):
+        return value if value else None

@@ -10,11 +10,22 @@ def buscar_opcoes_funcao(request):
     from .models import Funcao
     try:
         funcoes = Funcao.objects.all().order_by('nome')
-        opcoes = [{'id': f.nome, 'nome': f.nome} for f in funcoes]
+        opcoes = [{'id': f.id, 'nome': f.nome} for f in funcoes]
         return Response(opcoes)
     except Exception:
         # Se a tabela não existir ainda ou der erro, retorna os básicos
-        return Response([{'id': 'Membro', 'nome': 'Membro'}])
+        return Response([{'id': 1, 'nome': 'Membro'}])
+
+@api_view(['DELETE'])
+def excluir_funcao(request, pk):
+    """Exclui uma função pelo ID"""
+    from .models import Funcao
+    try:
+        funcao = Funcao.objects.get(pk=pk)
+        funcao.delete()
+        return Response({'success': True})
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
 
 @api_view(['GET'])
 def buscar_opcoes_parentesco(request):
