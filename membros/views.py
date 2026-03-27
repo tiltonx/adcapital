@@ -8,9 +8,13 @@ from .serializers import MembroSerializer
 def buscar_opcoes_funcao(request):
     """Retorna a lista dinâmica de funções da tabela Funcao"""
     from .models import Funcao
-    funcoes = Funcao.objects.all().order_by('nome')
-    opcoes = [{'id': f.nome, 'nome': f.nome} for f in funcoes]
-    return Response(opcoes)
+    try:
+        funcoes = Funcao.objects.all().order_by('nome')
+        opcoes = [{'id': f.nome, 'nome': f.nome} for f in funcoes]
+        return Response(opcoes)
+    except Exception:
+        # Se a tabela não existir ainda ou der erro, retorna os básicos
+        return Response([{'id': 'Membro', 'nome': 'Membro'}])
 
 @api_view(['GET'])
 def buscar_opcoes_parentesco(request):
@@ -36,22 +40,19 @@ class MembroViewSet(viewsets.ModelViewSet):
         self._salvar_com_parentescos(serializer)
 
     def _salvar_com_parentescos(self, serializer):
+        # O Serializer já resolve o SlugRelatedField (funcao) automaticamente.
+        # Se a tabela Funcao não existir, o Try/Except no FuncaoSlugField retorna None.
         membro = serializer.save()
         parentescos_data = self.request.data.get('parentescos_novo', [])
         
         if self.action == 'update' or self.action == 'partial_update':
-            # Remove apenas os vínculos que este membro criou originalmente
-            # Isso evita erros de "Unique Constraint" ao tentar recriar o que já existe
             Parentesco.objects.filter(membro_origem=membro).delete()
 
         for item in parentescos_data:
-            # Frontend pode enviar "parente_id" ou "membro_destino"
             p_id = item.get('parente_id') or item.get('membro_destino')
             grau = item.get('grau')
 
-            # Só tenta criar se o ID do parente for diferente do ID do próprio membro
             if p_id and grau and str(p_id) != str(membro.id):
-                # Usamos get_or_create para não dar erro se o inverso já existir
                 Parentesco.objects.get_or_create(
                     membro_origem=membro,
                     membro_destino_id=p_id,

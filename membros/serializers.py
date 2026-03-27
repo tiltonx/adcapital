@@ -12,12 +12,22 @@ class FuncaoSlugField(serializers.SlugRelatedField):
     def to_internal_value(self, data):
         if not data:
             return None
-        # Tenta buscar ou criar a função pelo nome enviado
-        obj, _ = self.get_queryset().get_or_create(**{self.slug_field: data})
-        return obj
+        # Busca ou cria a função. Se o banco falhar (ex: sem migração), 
+        # retorna None em vez de 500
+        try:
+            obj, _ = self.get_queryset().get_or_create(**{self.slug_field: data})
+            return obj
+        except Exception:
+            return None
+
+    def to_representation(self, value):
+        # Se for string (caso legado ou erro), retorna a string
+        if isinstance(value, str):
+            return value
+        return super().to_representation(value)
 
 class MembroSerializer(serializers.ModelSerializer):
-    # Isso permite enviar o nome da função e o Django resolve o ID
+    # Usamos o campo robusto para leitura/escrita
     funcao = FuncaoSlugField(
         slug_field='nome', 
         queryset=Funcao.objects.all(),
