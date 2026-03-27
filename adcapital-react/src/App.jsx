@@ -31,12 +31,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
-      <nav className="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-6xl mx-auto flex gap-6 font-black text-[10px] uppercase tracking-[0.2em]">
+      <nav className="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 shadow-sm flex items-center justify-between">
+        <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+             <img src="/logo.png" alt="Logo AD Capital" className="h-8 w-auto object-contain rounded-sm" />
+             <span className="font-black text-slate-800 tracking-tighter text-lg">AD CAPITAL</span>
+          </div>
+          <div className="flex gap-6 font-black text-[10px] uppercase tracking-[0.2em]">
           <button onClick={() => setTelaAtiva('home')} className={`pb-1 transition-all ${telaAtiva === 'home' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Início</button>
           <button onClick={() => setTelaAtiva('membros')} className={`pb-1 transition-all ${telaAtiva === 'membros' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Membros</button>
           <button onClick={() => setTelaAtiva('financeiro')} className={`pb-1 transition-all ${telaAtiva === 'financeiro' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Financeiro</button>
           <button onClick={() => setTelaAtiva('agenda')} className={`pb-1 transition-all ${telaAtiva === 'agenda' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Agenda</button>
+          </div>
         </div>
       </nav>
 
