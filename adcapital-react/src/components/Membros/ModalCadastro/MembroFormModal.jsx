@@ -46,16 +46,33 @@ export default function MembroFormModal({ formData, handleChange, funcoes, aplic
 
                 <div className="flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Função na Igreja</label>
-                    <input
-                        list="lista-funcoes"
-                        className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-blue-900"
-                        value={formData.funcao || ''}
-                        onChange={e => handleChange('funcao', e.target.value)}
-                        placeholder="Selecione ou digite..."
-                    />
-                    <datalist id="lista-funcoes">
-                        {funcoes.map(f => <option key={f.id} value={f.nome} />)}
-                    </datalist>
+                    <select
+                        className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-blue-900 mb-2"
+                        value={funcoes.some(f => f.nome === formData.funcao) ? formData.funcao : (formData.funcao ? 'OUTRA' : 'Membro')}
+                        onChange={e => {
+                            const val = e.target.value;
+                            if (val === 'OUTRA') {
+                                handleChange('funcao', ''); // Limpa para digitar a nova
+                            } else {
+                                handleChange('funcao', val);
+                            }
+                        }}
+                    >
+                        {funcoes.map(f => <option key={f.id} value={f.nome}>{f.nome}</option>)}
+                        <option value="OUTRA">+ Cadastrar Nova Função...</option>
+                    </select>
+
+                    {/* Campo extra que aparece apenas se o usuário escolher "Outra" ou se o valor atual não estiver na lista */}
+                    {(!funcoes.some(f => f.nome === formData.funcao) || formData.funcao === '') && (
+                        <input
+                            type="text"
+                            autoFocus
+                            className="p-3 border-2 border-blue-500 rounded-xl outline-none animate-pulse bg-blue-50 placeholder:text-blue-300 font-bold text-blue-900"
+                            placeholder="Digite o nome da nova função..."
+                            value={formData.funcao || ''}
+                            onChange={e => handleChange('funcao', e.target.value)}
+                        />
+                    )}
                 </div>
 
                 <div className="flex flex-col">
