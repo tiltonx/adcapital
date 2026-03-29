@@ -23,7 +23,7 @@ class Membro(models.Model):
 
     # Dados Pessoais
     nome = models.CharField(max_length=255)
-    cpf = models.CharField(max_length=14, unique=True, null=True, blank=True)
+    cpf = models.CharField(max_length=14, unique=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
     genero = models.CharField(max_length=1, choices=GENERO_CHOICES, default='M')
@@ -47,6 +47,11 @@ class Membro(models.Model):
     observacoes = models.TextField(blank=True)
     data_entrada = models.DateField(null=True, blank=True)
     data_saida = models.DateField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.nome:
+            self.nome = self.nome.upper()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nome
