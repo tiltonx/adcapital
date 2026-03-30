@@ -2,7 +2,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+    baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
+    timeout: 15000 // 15 segundos antes de considerar erro de conexão
 });
 
 api.interceptors.request.use(config => {
@@ -15,11 +16,20 @@ api.interceptors.request.use(config => {
     return Promise.reject(error);
 });
 
-// Interceptor de resposta para o refresh do token
+// Interceptor de resposta para o refresh do token e tratamento de erros de conexão
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+
+        // Se for erro de timeout ou rede (sem resposta do servidor)
+        if (error.code === 'ECONNABORTED' || !error.response) {
+            console.error("Erro de conexão ou tempo de resposta esgotado.");
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/';
+            return Promise.reject(error);
+        }
 
         // Se o erro for 401 e não for uma tentativa de refresh (gerando loop)
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -45,8 +55,12 @@ api.interceptors.response.use(
                     // Se o refresh falhar (token expirado ou inválido), desloga
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
-                    window.location.href = '/login';
+                    window.location.href = '/';
                 }
+            } else {
+                // Se não tem refresh token, vai para o login
+                localStorage.removeItem('access_token');
+                window.location.href = '/';
             }
         }
 
