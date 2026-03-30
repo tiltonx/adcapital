@@ -6,13 +6,8 @@ export default function LancamentoFinanceiroFormModal({ tipo, onClose, onSave, c
         formData,
         setFormData,
         categorias: categoriasForm,
-        mostrarCampoNovo,
-        setMostrarCampoNovo,
-        novaCategoria,
-        setNovaCategoria,
         valorExibicao,
         handleValorChange,
-        adicionarNovaCategoria,
         handleSubmit
     } = useLancamentoFinanceiroForm(tipo, onSave, onClose, categorias, onAdicionarCategoria, lancamento);
 
