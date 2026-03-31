@@ -123,3 +123,80 @@ def delete_event_from_google(google_event_id):
         service.events().delete(calendarId=CALENDAR_ID, eventId=google_event_id).execute()
     except Exception as e:
         print(f"Erro ao deletar evento {google_event_id} no Google Calendar:", e)
+
+def importar_eventos_do_google():
+    """
+    Busca eventos do Google Calendar e sincroniza com o banco local.
+    Retorna um dicionário com o resumo da operação.
+    """
+    service = get_calendar_service()
+    if not service:
+        return {"error": "Serviço Google não disponível"}
+
+    from .models import Evento
+    
+    # Define o intervalo: 30 dias atrás até 1 ano no futuro
+    agora = datetime.datetime.now(datetime.timezone.utc)
+    tempo_min = (agora - datetime.timedelta(days=30)).isoformat()
+    tempo_max = (agora + datetime.timedelta(days=365)).isoformat()
+
+    try:
+        events_result = service.events().list(
+            calendarId=CALENDAR_ID, 
+            timeMin=tempo_min,
+            timeMax=tempo_max,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        
+        google_events = events_result.get('items', [])
+        criados = 0
+        atualizados = 0
+
+        for g_event in google_events:
+            g_id = g_event['id']
+            summary = g_event.get('summary', '(Sem título)')
+            description = g_event.get('description', '')
+            
+            # Trata datas (Pode ser dateTime ou apenas date para eventos de dia inteiro)
+            start_data = g_event['start'].get('dateTime') or g_event['start'].get('date')
+            end_data = g_event['end'].get('dateTime') or g_event['end'].get('date')
+            
+            # Converte para datetime do Python/Django
+            dt_inicio = datetime.datetime.fromisoformat(start_data.replace('Z', '+00:00'))
+            dt_fim = datetime.datetime.fromisoformat(end_data.replace('Z', '+00:00'))
+
+            # Tenta encontrar o evento local pelo ID do Google
+            evento_local = Evento.objects.filter(google_event_id=g_id).first()
+
+            if evento_local:
+                # Atualiza localmente usando .update() para evitar disparar o save() recursivo
+                # Verificamos se houve mudança real para contar como "atualizado"
+                if (evento_local.titulo != summary or 
+                    evento_local.data_inicio != dt_inicio or 
+                    evento_local.data_fim != dt_fim):
+                    
+                    Evento.objects.filter(id=evento_local.id).update(
+                        titulo=summary,
+                        descricao=description,
+                        data_inicio=dt_inicio,
+                        data_fim=dt_fim
+                    )
+                    atualizados += 1
+            else:
+                # Criar novo evento. Passamos o google_event_id para que o save() original
+                # não tente criar outro evento no Google.
+                Evento.objects.create(
+                    titulo=summary,
+                    descricao=description,
+                    data_inicio=dt_inicio,
+                    data_fim=dt_fim,
+                    google_event_id=g_id
+                )
+                criados += 1
+
+        return {"total": len(google_events), "criados": criados, "atualizados": atualizados}
+
+    except Exception as e:
+        print("Erro ao importar eventos do Google:", e)
+        return {"error": str(e)}

@@ -9,11 +9,32 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 export default function AgendaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' ou 'list'
-  const { eventos, carregando, syncStatus, criarEvento, deletarEvento, sincronizar } = useAgenda();
+  const [loadingSync, setLoadingSync] = useState(false);
+  const { 
+    eventos, 
+    carregando, 
+    syncStatus, 
+    criarEvento, 
+    deletarEvento, 
+    editarEvento, 
+    sincronizarComGoogle 
+  } = useAgenda();
 
   const handleSalvar = async (eventoData) => {
     const sucesso = await criarEvento(eventoData);
     if (sucesso) setIsModalOpen(false);
+  };
+
+  const handleSync = async () => {
+    setLoadingSync(true);
+    const res = await sincronizarComGoogle();
+    setLoadingSync(false);
+    
+    if (res.error) {
+       alert("Erro na sincronização: " + res.error);
+    } else {
+       alert(`Sincronização concluída! ${res.total} eventos processados (${res.criados} novos, ${res.atualizados} atualizados).`);
+    }
   };
 
   // Converte eventos do banco para o formato do FullCalendar
@@ -74,12 +95,21 @@ export default function AgendaPage() {
               </button>
             </div>
 
+            {/* Novo Botão de Sincronização */}
+            <button
+               onClick={handleSync}
+               disabled={loadingSync || carregando}
+               className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold text-xs transition-all hover:bg-emerald-100 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+            >
+               {loadingSync ? 'Sincronizando...' : '🔄 Sincronizar Agora'}
+            </button>
+
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2"
-              disabled={carregando}
+              disabled={carregando || loadingSync}
             >
-              {carregando ? 'Processando...' : '+ Adicionar Evento'}
+              {carregando && !loadingSync ? 'Processando...' : '+ Adicionar Evento'}
             </button>
           </div>
         </div>
@@ -96,7 +126,7 @@ export default function AgendaPage() {
               <EmptyState />
             ) : (
               eventos.map((ev) => (
-                <ListItem key={ev.id} ev={ev} deletarEvento={deletarEvento} sincronizar={sincronizar} />
+                <ListItem key={ev.id} ev={ev} deletarEvento={deletarEvento} editarEvento={editarEvento} />
               ))
             )}
           </div>
@@ -153,7 +183,7 @@ function EmptyState() {
   );
 }
 
-function ListItem({ ev, deletarEvento, sincronizar }) {
+function ListItem({ ev, deletarEvento, editarEvento }) {
   return (
     <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50 transition-colors">
       <div className="flex-1">
@@ -173,7 +203,7 @@ function ListItem({ ev, deletarEvento, sincronizar }) {
             <span className="text-green-700 bg-green-50 px-3 pt-1 pb-0.5 rounded-xl flex items-center gap-1 tracking-tight">Sincronizado ✅</span>
           ) : (
             <button 
-              onClick={() => sincronizar(ev.id, ev)}
+              onClick={() => editarEvento(ev.id, ev)}
               className="text-amber-700 bg-amber-50 px-3 pt-1 pb-0.5 rounded-xl flex items-center gap-1 hover:bg-amber-100 transition-colors"
             >
               Não Sincronizado (Tentar Agora 🔄)

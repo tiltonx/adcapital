@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Evento
 from .serializers import EventoSerializer
-from .services import get_calendar_service
+from .services import get_calendar_service, importar_eventos_do_google
 
 class EventoViewSet(viewsets.ModelViewSet):
     """
@@ -13,6 +13,16 @@ class EventoViewSet(viewsets.ModelViewSet):
     """
     queryset = Evento.objects.all().order_by('data_inicio')
     serializer_class = EventoSerializer
+
+class SyncGoogleEventsView(APIView):
+    """
+    Dispara a sincronização de 'Volta' (Google -> Local).
+    """
+    def post(self, request):
+        resultado = importar_eventos_do_google()
+        if "error" in resultado:
+            return Response(resultado, status=500)
+        return Response(resultado)
 
 class StatusSincronizacaoView(APIView):
     """

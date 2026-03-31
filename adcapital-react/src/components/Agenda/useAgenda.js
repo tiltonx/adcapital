@@ -65,15 +65,29 @@ export function useAgenda() {
     }
   };
 
-  const sincronizar = async (id, dados) => {
+  const editarEvento = async (id, dados) => {
     setCarregando(true);
     try {
       await api.put(`/agenda/eventos/${id}/`, dados);
       await buscarEventos();
       return true;
     } catch (error) {
-      console.error("Erro ao sincronizar evento:", error);
+      console.error("Erro ao editar evento:", error);
       return false;
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const sincronizarComGoogle = async () => {
+    setCarregando(true);
+    try {
+      const response = await api.post('/agenda/sync/');
+      await buscarEventos();
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao sincronizar com Google:", error);
+      return { error: "Falha na sincronização externa" };
     } finally {
       setCarregando(false);
     }
@@ -87,6 +101,7 @@ export function useAgenda() {
     verificarStatus, 
     criarEvento, 
     deletarEvento, 
-    sincronizar 
+    editarEvento,
+    sincronizarComGoogle 
   };
 }
