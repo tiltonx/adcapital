@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Header from '../Header';
 import MembroCard from './MembroCard';
+import MembroTable from './MembroTable';
 import CadastroMainFormModal from './ModalCadastro/CadastroMainFormModal';
 import membroService from '../../api/membroService';
 
@@ -15,6 +16,7 @@ export default function MembrosPage({
 }) {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [membroParaEditar, setMembroParaEditar] = useState(null);
+  const [viewType, setViewType] = useState('grid'); // 'grid' ou 'list'
 
   const abrirNovo = () => {
     setMembroParaEditar(null);
@@ -48,17 +50,50 @@ export default function MembrosPage({
           totalFiltrado={membrosFiltrados.length}
           onNovo={abrirNovo}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {membrosFiltrados.map((m) => (
-            <MembroCard
-              key={m.id}
-              m={m}
-              graus={graus}
-              onEdit={() => abrirEdicao(m)}
-              onDelete={() => handleExcluir(m.id)}
-            />
-          ))}
+
+        {/* Barra de Ações da Lista */}
+        <div className="flex justify-start items-center gap-1 bg-white/50 backdrop-blur p-1 rounded-xl border border-slate-200 w-fit">
+          <button
+            onClick={() => setViewType('grid')}
+            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              viewType === 'grid'
+                ? 'bg-blue-900 text-white shadow-md'
+                : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'
+            }`}
+          >
+            🔲 Grade
+          </button>
+          <button
+            onClick={() => setViewType('list')}
+            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              viewType === 'list'
+                ? 'bg-blue-900 text-white shadow-md'
+                : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'
+            }`}
+          >
+            📜 Lista
+          </button>
         </div>
+
+        {viewType === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {membrosFiltrados.map((m) => (
+              <MembroCard
+                key={m.id}
+                m={m}
+                graus={graus}
+                onEdit={() => abrirEdicao(m)}
+                onDelete={() => handleExcluir(m.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <MembroTable 
+            membros={membrosFiltrados} 
+            onEdit={abrirEdicao} 
+            onDelete={handleExcluir} 
+          />
+        )}
       </div>
 
       {mostrarModal && (
