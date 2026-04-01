@@ -234,21 +234,21 @@ const LandingPage = () => {
       )}
 
       {/* --- DÍZIMOS E OFERTAS --- */}
-      <section className="py-20 px-6 max-w-4xl mx-auto">
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-10 md:p-16 text-center relative overflow-hidden shadow-2xl">
+      <section className="py-16 px-6 max-w-2xl mx-auto">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-8 md:p-12 text-center relative overflow-hidden shadow-2xl">
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-400/20 rounded-full blur-[80px]" />
           <div className="relative z-10">
-            <Heart className="w-16 h-16 mx-auto mb-6 text-white animate-pulse" />
-            <h2 className="text-3xl md:text-5xl font-black mb-8 text-white uppercase italic">Ofertas e Dízimos</h2>
-            <div className="space-y-6">
-              <p className="text-blue-100 text-lg md:text-xl font-medium tracking-wide uppercase">
+            <Heart className="w-10 h-10 mx-auto mb-4 text-white animate-pulse" />
+            <h2 className="text-2xl md:text-3xl font-black mb-6 text-white uppercase italic tracking-tight">Ofertas e Dízimos</h2>
+            <div className="space-y-4">
+              <p className="text-blue-100 text-sm md:text-base font-semibold tracking-wide uppercase leading-tight">
                 {config?.beneficiario}
               </p>
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-3xl inline-block">
-                <span className="text-blue-200 text-sm font-bold uppercase block mb-1">CHAVE PIX:</span>
-                <p className="text-2xl md:text-3xl font-black text-white">{config?.pix_chave}</p>
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl inline-block">
+                <span className="text-blue-200 text-[10px] font-black uppercase block mb-1">CHAVE PIX:</span>
+                <p className="text-lg md:text-xl font-black text-white">{config?.pix_chave}</p>
               </div>
-              <p className="text-blue-200 font-bold uppercase text-lg">{config?.banco_nome}</p>
+              <p className="text-blue-200 font-bold uppercase text-sm tracking-widest">{config?.banco_nome}</p>
             </div>
           </div>
         </div>
