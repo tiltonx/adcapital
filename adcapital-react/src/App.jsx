@@ -111,10 +111,12 @@ function MainApp({ logout }) {
 function App() {
   const { token, logout } = useAuth();
   
-  // Detecta se o acesso é pelo subdomínio 'cadastro' ou pelo caminho '/cadastro'
+  // Detecta se o acesso é pelo subdomínio 'cadastro', pelo caminho '/cadastro' 
+  // ou pelo hash '#/cadastro' (que evita erros 404 em hosts estáticos)
   const isPortal = 
     window.location.hostname.startsWith('cadastro.') || 
-    window.location.pathname.startsWith('/cadastro');
+    window.location.pathname.startsWith('/cadastro') ||
+    window.location.hash.startsWith('#/cadastro');
 
   if (isPortal) {
     return <AutoCadastroPage />;
