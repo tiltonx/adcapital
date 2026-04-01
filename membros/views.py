@@ -1,4 +1,10 @@
+from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal
+from .serializers import MembroSerializer, ConfiguracaoPortalSerializer
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -113,6 +119,7 @@ class AutoCadastroMembroView(APIView):
     Permite criar ou editar (se CPF já existir e resposta estiver correta).
     """
     permission_classes = [AllowAny]
+    authentication_classes = [] # Desativa autenticação para o portal público
 
     def post(self, request):
         config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
