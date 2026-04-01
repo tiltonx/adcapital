@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from .models import Transacao, CategoriaFinanceira
 from .serializers import TransacaoSerializer, CategoriaFinanceiraSerializer
+from membros.models import Membro
 
 class TransacaoViewSet(viewsets.ModelViewSet):
     queryset = Transacao.objects.all().order_by('-data')
@@ -19,9 +20,11 @@ class DashboardAPIView(APIView):
         entradas = Transacao.objects.filter(tipo='ENTRADA').aggregate(total=Sum('valor'))['total'] or 0
         saidas = Transacao.objects.filter(tipo='SAIDA').aggregate(total=Sum('valor'))['total'] or 0
         saldo = entradas - saidas
+        total_membros = Membro.objects.count()
 
         return Response({
             'total_entradas': entradas,
             'total_saidas': saidas,
-            'saldo_atual': saldo
+            'saldo_atual': saldo,
+            'total_membros': total_membros
         })
