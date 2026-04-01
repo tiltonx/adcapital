@@ -146,9 +146,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-FRONTEND_URL = os.environ.get('FRONTEND_URL')
-if FRONTEND_URL:
-    CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
+FRONTEND_URLS = os.environ.get('FRONTEND_URL', '').split(',')
+if FRONTEND_URLS and FRONTEND_URLS[0]:
+    CORS_ALLOWED_ORIGINS = [url.strip() for url in FRONTEND_URLS if url.strip()]
     CORS_ALLOW_ALL_ORIGINS = False
 else:
     CORS_ALLOW_ALL_ORIGINS = True # Local development fall-back
