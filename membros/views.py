@@ -1,13 +1,8 @@
-from rest_framework import viewsets
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
-from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal
-from .serializers import MembroSerializer, ConfiguracaoPortalSerializer
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def buscar_opcoes_funcao(request):
     """Retorna a lista dinâmica de funções da tabela Funcao"""
     try:
@@ -30,6 +25,7 @@ def excluir_funcao(request, pk):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def buscar_opcoes_parentesco(request):
     """Retorna a lista dinâmica de graus de parentesco extraída do models"""
     opcoes = [{'id': f[0], 'nome': f[1]} for f in Parentesco.GRAU_CHOICES]
@@ -37,6 +33,7 @@ def buscar_opcoes_parentesco(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def buscar_configuracao_publica(request):
     """Retorna apenas o status e a pergunta do portal para o público"""
     config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
@@ -47,6 +44,7 @@ def buscar_configuracao_publica(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def verificar_resposta_portal(request):
     """Verifica se a resposta do membro está correta para liberar o formulário"""
     resposta_user = request.data.get('resposta', '').strip().lower()
