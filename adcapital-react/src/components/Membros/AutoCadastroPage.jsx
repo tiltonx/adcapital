@@ -74,16 +74,30 @@ export default function AutoCadastroPage() {
         setLoading(true);
         setError('');
         try {
+            // Limpeza de campos de data: se estiver vazio, envia como null para evitar erro 400
+            const cleanedData = { ...formData };
+            if (!cleanedData.data_nascimento) cleanedData.data_nascimento = null;
+
             // Chamada para a nova Rota Direta de Auto-Cadastro curta
             const res = await axios.post(`${BASE_HOST}/c/`, {
-                ...formData,
+                ...cleanedData,
                 sync_resposta: resposta
             });
             if (res.data.success) {
                 setStep('success');
             }
         } catch (err) {
-            setError("Erro ao salvar cadastro. Verifique os campos ou se o CPF está correto.");
+            console.error("Erro ao salvar:", err);
+            const errorData = err.response?.data;
+            if (errorData) {
+                // Formata os erros do Django para exibição legível
+                const details = Object.entries(errorData)
+                    .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
+                    .join(" | ");
+                setError(`Erro na validação: ${details}`);
+            } else {
+                setError("Erro ao salvar cadastro. Verifique os campos ou se o CPF está correto.");
+            }
         } finally {
             setLoading(false);
         }

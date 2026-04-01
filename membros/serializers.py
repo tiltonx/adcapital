@@ -69,13 +69,19 @@ class MembroSerializer(serializers.ModelSerializer):
         return value if value else None
 
     def validate_data_nascimento(self, value):
-        return value if value else None
+        if not value or value == "":
+            return None
+        return value
 
     def validate_data_entrada(self, value):
-        return value if value else None
+        if not value or value == "":
+            return None
+        return value
 
     def validate_data_saida(self, value):
-        return value if value else None
+        if not value or value == "":
+            return None
+        return value
 
 class ConfiguracaoPortalSerializer(serializers.ModelSerializer):
     class Meta:
