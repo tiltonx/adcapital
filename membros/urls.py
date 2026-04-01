@@ -1,9 +1,10 @@
-# v1.1.3 - Rotas Administrativas Apenas
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     MembroViewSet, 
     ConfiguracaoPortalViewSet,
+    ConfiguracaoSiteViewSet,
+    FotoGaleriaViewSet,
     excluir_funcao,
     buscar_opcoes_funcao,
     buscar_opcoes_parentesco,
@@ -15,17 +16,19 @@ from .view_public import (
     auto_cadastro_direto
 )
 
-# Router para a área administrativa
+# Router para a área administrativa e pública (ViewSets cuidam das permissões)
 router = DefaultRouter()
 router.register(r'membros', MembroViewSet)
 router.register(r'configuracao-portal', ConfiguracaoPortalViewSet, basename='configuracao-portal')
+router.register(r'configuracao-site', ConfiguracaoSiteViewSet, basename='configuracao-site')
+router.register(r'galeria', FotoGaleriaViewSet, basename='galeria')
 
 urlpatterns = [
     # Rotas Públicas (Sem autenticação no prefixo /api/)
     path('v/', portal_verificar_resposta_direto, name='portal_v'),
     path('c/', auto_cadastro_direto, name='portal_c'),
     
-    # Novas rotas para o Dashboard Admin (Caminhos curtíssimos sob /api/)
+    # Novas rotas para o Dashboard Admin e Site Público
     path('opcoes-funcao/', buscar_opcoes_funcao, name='opcoes-funcao'),
     path('opcoes-parentesco/', buscar_opcoes_parentesco, name='opcoes-parentesco'),
     path('configuracao-portal/publica/', buscar_configuracao_publica, name='config-publica'),

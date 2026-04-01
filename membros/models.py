@@ -117,3 +117,43 @@ class ConfiguracaoPortal(models.Model):
             # Se já existe uma, impede a criação de outra
             return
         super().save(*args, **kwargs)
+
+class ConfiguracaoSite(models.Model):
+    # Dízimos e Ofertas
+    pix_chave = models.CharField(max_length=255, default="adcapital.church@gmail.com", verbose_name="Chave PIX")
+    banco_nome = models.CharField(max_length=100, default="BANCO DO BRASIL", verbose_name="Nome do Banco")
+    beneficiario = models.CharField(max_length=255, default="IGREJA EVANGELICA ASSEMBLEIA DE DEUS MINISTERIO NA CAPITAL", verbose_name="Beneficiário")
+    
+    # Redes Sociais
+    instagram_url = models.URLField(default="https://instagram.com/adcapital.igreja", verbose_name="Instagram")
+    youtube_url = models.URLField(default="https://www.youtube.com/@adcapital.church313", verbose_name="YouTube")
+    facebook_url = models.URLField(blank=True, null=True, verbose_name="Facebook")
+    
+    # Institucional
+    video_sobre_nos_url = models.URLField(blank=True, null=True, verbose_name="Vídeo Sobre Nós (YouTube URL)")
+    endereco_completo = models.TextField(default="Ch 18 Lt 6/7 Setor de Mansões IAPI - Guará 2 - Brasília - DF - 71.081-245", verbose_name="Endereço Completo")
+    google_maps_url = models.URLField(blank=True, null=True, verbose_name="URL do Google Maps")
+    
+    # Palavra Pastoral
+    pastor_nome = models.CharField(max_length=255, default="Pastor Responsável", verbose_name="Nome do Pastor")
+    pastoral_titulo = models.CharField(max_length=255, default="Uma Palavra de Fé", verbose_name="Título da Mensagem")
+    pastoral_texto = models.TextField(blank=True, verbose_name="Texto da Palavra Pastoral")
+    pastor_foto = models.ImageField(upload_to='site/pastor/', blank=True, null=True, verbose_name="Foto do Pastor")
+
+    class Meta:
+        verbose_name = "Configuração do Site"
+        verbose_name_plural = "Configurações do Site"
+
+    def __str__(self):
+        return "Configuração do Site Institucional"
+
+class FotoGaleria(models.Model):
+    imagem = models.ImageField(upload_to='site/galeria/', verbose_name="Imagem")
+    legenda = models.CharField(max_length=255, blank=True, verbose_name="Legenda")
+    ordem = models.PositiveIntegerField(default=0, verbose_name="Ordem de Exibição")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Foto da Galeria"
+        verbose_name_plural = "Fotos da Galeria"
+        ordering = ['ordem', '-criado_em']

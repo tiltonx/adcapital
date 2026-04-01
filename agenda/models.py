@@ -49,3 +49,26 @@ class Evento(models.Model):
             delete_event_from_google(self.google_event_id)
         
         super().delete(*args, **kwargs)
+
+class ProgramacaoSemanal(models.Model):
+    DIA_CHOICES = [
+        (0, 'Domingo'),
+        (1, 'Segunda-feira'),
+        (2, 'Terça-feira'),
+        (3, 'Quarta-feira'),
+        (4, 'Quinta-feira'),
+        (5, 'Sexta-feira'),
+        (6, 'Sábado'),
+    ]
+    dia_semana = models.IntegerField(choices=DIA_CHOICES, verbose_name="Dia da Semana")
+    titulo = models.CharField(max_length=200, verbose_name="Título do Evento")
+    horario = models.CharField(max_length=100, verbose_name="Horário (ex: 19:00 às 21:00)")
+    ordem = models.PositiveIntegerField(default=0, verbose_name="Ordem no Dia")
+
+    class Meta:
+        verbose_name = "Programação Semanal"
+        verbose_name_plural = "Programações Semanais"
+        ordering = ['dia_semana', 'ordem']
+
+    def __str__(self):
+        return f"{self.get_dia_semana_display()} - {self.titulo}"

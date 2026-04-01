@@ -1,23 +1,28 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Evento
-from .serializers import EventoSerializer
+from .models import Evento, ProgramacaoSemanal
+from .serializers import EventoSerializer, ProgramacaoSemanalSerializer
 from .services import get_calendar_service, importar_eventos_do_google
 
 class EventoViewSet(viewsets.ModelViewSet):
-    """
-    CRUD para Eventos.
-    A criação e exclusão no banco sincronizará automaticamente 
-    com o Google Calendar graças aos métodos save() e delete() do modelo.
-    """
     queryset = Evento.objects.all().order_by('data_inicio')
     serializer_class = EventoSerializer
 
+class ProgramacaoSemanalViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para a programação semanal (EBD, Cultos fixos).
+    Público para leitura (list), restrito para edição.
+    """
+    queryset = ProgramacaoSemanal.objects.all().order_by('dia_semana', 'ordem')
+    serializer_class = ProgramacaoSemanalSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
 class SyncGoogleEventsView(APIView):
-    """
-    Dispara a sincronização de 'Volta' (Google -> Local).
-    """
     def post(self, request):
         resultado = importar_eventos_do_google()
         if "error" in resultado:
@@ -25,9 +30,6 @@ class SyncGoogleEventsView(APIView):
         return Response(resultado)
 
 class StatusSincronizacaoView(APIView):
-    """
-    Retorna o status da conexão com a API do Google Calendar.
-    """
     def get(self, request):
         service = get_calendar_service()
         if service:

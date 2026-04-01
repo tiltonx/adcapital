@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMembros } from './components/Membros/useMembros'
 import MembrosPage from './components/Membros/MembrosPage'
 import DashboardHome from './components/Apresentacao/DashboardHome'
@@ -10,6 +10,7 @@ import SettingsPage from './components/Configuracoes/SettingsPage'
 import Login from './components/Auth/Login'
 import { useAuth } from './components/Auth/AuthProvider'
 import AutoCadastroPage from './components/Membros/AutoCadastroPage'
+import LandingPage from './components/SitePublico/LandingPage'
 
 function MainApp({ logout }) {
   const { membros, membrosFiltrados, busca, setBusca, funcoes, graus, carregarDados } = useMembros();
@@ -110,19 +111,46 @@ function MainApp({ logout }) {
 
 function App() {
   const { token, logout } = useAuth();
+  const [, setHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    // Log para Debug - Veja isso no console do navegador (F12)
+    console.log("Versão do App: SiteInstitucional-v1.2");
+    console.log("URL Atual:", window.location.href);
+
+    const handleHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   
-  // Detecta se o acesso é pelo subdomínio 'cadastro', pelo caminho '/cadastro' 
-  // ou pelo hash '#/cadastro' (que evita erros 404 em hosts estáticos)
+  const currentHash = window.location.hash.toLowerCase();
+  const currentHost = window.location.hostname.toLowerCase();
+
+  // 1. Prioridade Máxima: Site Institucional
+  // Detecta "site" em qualquer lugar do endereço (hash ou domínio)
+  const isLandingPage = 
+    currentHost.includes('adcapitaligreja.com.br') || 
+    currentHash.includes('site');
+
+  if (isLandingPage) {
+    return <LandingPage />;
+  }
+
+  // 2. Portal de Cadastro
   const isPortal = 
-    window.location.hostname.startsWith('cadastro.') || 
-    window.location.pathname.startsWith('/cadastro') ||
-    window.location.hash.startsWith('#/cadastro');
+    currentHost.includes('cadastro') || 
+    currentHash.includes('cadastro');
 
   if (isPortal) {
     return <AutoCadastroPage />;
   }
 
+  // 3. Sistema (Exige Login)
   if (!token) {
+    // Se não estiver no domínio sistema, vai para o site
+    if (!currentHost.includes('sistema')) {
+       return <LandingPage />;
+    }
     return <Login />;
   }
 

@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
-from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal
-from .serializers import MembroSerializer, ConfiguracaoPortalSerializer
+from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal, ConfiguracaoSite, FotoGaleria
+from .serializers import MembroSerializer, ConfiguracaoPortalSerializer, ConfiguracaoSiteSerializer, FotoGaleriaSerializer
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -83,6 +83,38 @@ class ConfiguracaoPortalViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+class ConfiguracaoSiteViewSet(viewsets.ModelViewSet):
+    """Gestão da configuração do site institucional (id fixo = 1)"""
+    queryset = ConfiguracaoSite.objects.all()
+    serializer_class = ConfiguracaoSiteSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def list(self, request, *args, **kwargs):
+        config, _ = ConfiguracaoSite.objects.get_or_create(id=1)
+        serializer = self.get_serializer(config)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        config, _ = ConfiguracaoSite.objects.get_or_create(id=1)
+        serializer = self.get_serializer(config, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+class FotoGaleriaViewSet(viewsets.ModelViewSet):
+    """Gestão da galeria de fotos do site"""
+    queryset = FotoGaleria.objects.all().order_by('ordem', '-criado_em')
+    serializer_class = FotoGaleriaSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
 class MembroViewSet(viewsets.ModelViewSet):
     """CRUD administrativo completo para Membros"""
