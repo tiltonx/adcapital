@@ -17,31 +17,25 @@ const configuracaoService = {
   excluirCategoria: (id) => api.delete(`/financeiro/categorias/${id}/`),
 
   // Portal de Membros (Segurança)
-  getPortalConfig: () => api.get('/membros/configuracao-portal/1/'),
-  updatePortalConfig: (dados) => api.put('/membros/configuracao-portal/1/', dados),
+  getPortalConfig: () => api.get('/configuracao-portal/1/'),
+  savePortalConfig: (data) => api.put('/configuracao-portal/1/', data),
 
-  // NOVO: Gestão do Site Institucional (Landing Page)
-  getSiteConfig: () => api.get('/membros/configuracao-site/1/'),
-  updateSiteConfig: (dados) => api.put('/membros/configuracao-site/1/', dados, {
-    headers: { 'Content-Type': 'multipart/form-data' } // Para suportar upload de foto do Pastor
-  }),
-
-  // Gestão da Galeria de Fotos
-  listarGaleria: () => api.get('/membros/galeria/'),
-  adicionarFotoGaleria: (formData) => api.post('/membros/galeria/', formData, {
+  // Novas rotas para o Site Público
+  getSiteConfig: () => api.get('/configuracao-site/1/'),
+  saveSiteConfig: (data) => api.patch('/configuracao-site/1/', data, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  excluirFotoGaleria: (id) => api.delete(`/membros/galeria/${id}/`),
 
-  // Gestão da Programação Semanal
-  listarProgramacao: () => api.get('/agenda/programacao-semanal/'),
-  salvarProgramacao: (dados) => {
-    if (dados.id) {
-      return api.put(`/agenda/programacao-semanal/${dados.id}/`, dados);
-    }
-    return api.post('/agenda/programacao-semanal/', dados);
-  },
-  excluirProgramacao: (id) => api.delete(`/agenda/programacao-semanal/${id}/`),
+  getGaleria: () => api.get('/galeria/'),
+  uploadFotoGaleria: (data) => api.post('/galeria/', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  excluirFotoGaleria: (id) => api.delete(`/galeria/${id}/`),
+
+  // Programação Semanal
+  getProgramacao: () => api.get('/agenda/programacao-semanal/'),
+  saveProgramacao: (data) => api.post('/agenda/programacao-semanal/', data),
+  deleteProgramacao: (id) => api.delete(`/agenda/programacao-semanal/${id}/`),
 };
 
 export default configuracaoService;
