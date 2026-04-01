@@ -26,8 +26,8 @@ export default function AutoCadastroPage() {
         const loadPublicConfig = async () => {
             try {
                 const [cfgRes, funcRes] = await Promise.all([
-                    axios.get(`${API_URL}/membros/portal-config/`),
-                    axios.get(`${API_URL}/membros/opcoes-funcao/`)
+                    axios.get(`${API_URL}/portal-config/`),
+                    axios.get(`${API_URL}/opcoes-funcao/`)
                 ]);
                 setConfig(cfgRes.data);
                 setFuncoes(funcRes.data);
@@ -43,7 +43,7 @@ export default function AutoCadastroPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.post(`${API_URL}/membros/portal-verificar/`, { resposta });
+            const res = await axios.post(`${API_URL}/portal-verificar/`, { resposta });
             if (res.data.success) {
                 setStep('form');
             }
@@ -69,7 +69,7 @@ export default function AutoCadastroPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.post(`${API_URL}/membros/auto-cadastro/`, {
+            const res = await axios.post(`${API_URL}/auto-cadastro/`, {
                 ...formData,
                 sync_resposta: resposta // Envia a resposta novamente para validação no backend
             });
