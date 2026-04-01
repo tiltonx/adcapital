@@ -126,32 +126,34 @@ function App() {
   const currentHash = window.location.hash.toLowerCase();
   const currentHost = window.location.hostname.toLowerCase();
 
-  // 1. Prioridade Máxima: Site Institucional
-  // Detecta "site" em qualquer lugar do endereço (hash ou domínio)
-  const isLandingPage = 
-    currentHost.includes('adcapitaligreja.com.br') || 
-    currentHash.includes('site');
-
-  if (isLandingPage) {
-    return <LandingPage />;
-  }
-
-  // 2. Portal de Cadastro
+  // 1. Detecção de Portal de Cadastro (Prioridade para o subdomínio ou hash específico)
   const isPortal = 
-    currentHost.includes('cadastro') || 
+    currentHost.startsWith('cadastro.') || 
     currentHash.includes('cadastro');
 
   if (isPortal) {
     return <AutoCadastroPage />;
   }
 
-  // 3. Sistema (Exige Login)
+  // 2. Detecção de Site Institucional (Landing Page)
+  // Só entra aqui se for o domínio principal EXATO ou se for forçado via hash /#/site
+  const isLandingPage = 
+    currentHost === 'adcapitaligreja.com.br' || 
+    currentHost === 'www.adcapitaligreja.com.br' ||
+    currentHash.includes('site');
+
+  if (isLandingPage) {
+    return <LandingPage />;
+  }
+
+  // 3. Sistema Administrativo (Exige Login)
   if (!token) {
-    // Se não estiver no domínio sistema, vai para o site
-    if (!currentHost.includes('sistema')) {
-       return <LandingPage />;
+    // Se o usuário estiver no subdomínio sistema, mostra login. 
+    // Caso contrário (domínios genéricos ou IP), mostra o site por segurança/SEO.
+    if (currentHost.startsWith('sistema.')) {
+       return <Login />;
     }
-    return <Login />;
+    return <LandingPage />;
   }
 
   return <MainApp logout={logout} />;
