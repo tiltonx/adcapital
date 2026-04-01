@@ -4,7 +4,7 @@ import axios from 'axios';
 import MembroFormFields from './MembroFormFields';
 
 // URL Base da API (FIXA para evitar confusão de domínios)
-const BASE_HOST = 'https://api.adcapitaligreja.com.br';
+const BASE_HOST = 'https://api.adcapitaligreja.com.br/api';
 
 export default function AutoCadastroPage() {
     // 1. Estratégia de Independência: Pergunta e Funções fixas para evitar erros de carregamento
@@ -48,7 +48,12 @@ export default function AutoCadastroPage() {
             }
         } catch (err) {
             console.error("Erro na verificação:", err);
-            setError(err.response?.data?.error || "Resposta incorreta. Tente 'Jesus'.");
+            // Se o erro for 401, a resposta está errada. Se for 404 ou outro, é problema de rede/servidor.
+            if (err.response?.status === 401) {
+                setError(err.response?.data?.error || "Resposta incorreta. Tente 'Jesus'.");
+            } else {
+                setError("Erro ao conectar com o servidor. Tente novamente em instantes.");
+            }
         } finally {
             setLoading(false);
         }

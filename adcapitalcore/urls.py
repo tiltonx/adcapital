@@ -13,8 +13,8 @@ from membros.view_public import (
 urlpatterns = [
     # [PORTAL PUBLIC ROUTES - DIRECT DJANGO]
     # Usando caminhos curtíssimos para evitar problemas de roteamento/pending
-    path('v/', portal_verificar_resposta_direto, name='portal_v'),
-    path('c/', auto_cadastro_direto, name='portal_c'),
+    # path('v/', portal_verificar_resposta_direto, name='portal_v'),
+    # path('c/', auto_cadastro_direto, name='portal_c'),
 
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
