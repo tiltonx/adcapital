@@ -94,14 +94,23 @@ const LandingPage = () => {
           <p className="text-lg md:text-2xl text-slate-400 max-w-2xl font-light italic">
             "Lugar de Restauração, Vida e Paz."
           </p>
+
+          <div className="flex gap-4 mt-8">
+             <a href={config?.instagram_url} target="_blank" className="p-4 bg-white/10 rounded-full hover:bg-blue-600 transition-all text-white backdrop-blur-md border border-white/10 shadow-xl group">
+               <Instagram size={24} className="group-hover:scale-110 transition-transform" />
+             </a>
+             <a href={config?.youtube_url} target="_blank" className="p-4 bg-white/10 rounded-full hover:bg-red-600 transition-all text-white backdrop-blur-md border border-white/10 shadow-xl group">
+               <Youtube size={24} className="group-hover:scale-110 transition-transform" />
+             </a>
+          </div>
           
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => window.open(config?.google_maps_url || '#', '_blank')}
-            className="mt-10 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+            className="mt-8 px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-full transition-all shadow-2xl shadow-blue-900/40 flex items-center gap-3 uppercase tracking-widest text-sm"
           >
-            <MapPin size={20} />
+            <MapPin size={22} />
             COMO CHEGAR
           </motion.button>
         </motion.div>
@@ -238,46 +247,37 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
           
           {/* Coluna 1: QR Code e Endereço */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-             <div className="bg-white p-2 rounded-3xl mb-6 shadow-2xl overflow-hidden w-[160px] h-[160px]">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+             <div className="bg-white p-3 rounded-[2rem] shadow-2xl overflow-hidden w-[200px] h-[200px] border-4 border-slate-900">
                 <img 
                   src={qrcode} 
                   alt="QR Code" 
                   className="w-full h-full object-contain"
                 />
              </div>
-             <p className="text-white font-black text-lg mb-2 uppercase tracking-tighter italic leading-none">AD CAPITAL</p>
-             <p className="text-slate-500 max-w-[250px] mb-6 text-[11px] font-medium leading-relaxed">
-               {config?.endereco_completo}
-             </p>
-             <div className="flex gap-3">
-                <a href={config?.instagram_url} target="_blank" className="p-3 bg-slate-900 rounded-full hover:bg-blue-600 transition-all text-white border border-slate-800">
-                  <Instagram size={18} />
-                </a>
-                <a href={config?.youtube_url} target="_blank" className="p-3 bg-slate-900 rounded-full hover:bg-red-600 transition-all text-white border border-slate-800">
-                  <Youtube size={18} />
-                </a>
-                {config?.facebook_url && (
-                  <a href={config?.facebook_url} target="_blank" className="p-3 bg-slate-900 rounded-full hover:bg-blue-800 transition-all text-white border border-slate-800">
-                    <Facebook size={18} />
-                  </a>
-                )}
+             <div>
+                <p className="text-white font-black text-2xl mb-1 uppercase tracking-tighter italic leading-none">AD CAPITAL</p>
+                <p className="text-slate-500 max-w-[280px] text-xs font-bold leading-relaxed opacity-80">
+                  {config?.endereco_completo}
+                </p>
              </div>
           </div>
 
           {/* Coluna 2: Ofertas e Dízimos (Centro) */}
-          <div className="flex flex-col items-center">
-             <div className="bg-gradient-to-br from-blue-600/20 to-indigo-700/20 backdrop-blur-sm p-8 rounded-[2.5rem] border border-blue-500/20 w-full max-w-[320px] relative overflow-hidden group hover:border-blue-500/40 transition-all">
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all" />
-                <Heart className="w-8 h-8 mx-auto mb-4 text-blue-500 animate-pulse" />
-                <h3 className="text-white font-black text-sm uppercase tracking-[0.2em] mb-6 text-center italic">Ofertas e Dízimos</h3>
+          <div className="flex flex-col items-center py-4 lg:py-0">
+             <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-10 rounded-[3rem] shadow-2xl border border-white/10 w-full max-w-[380px] relative overflow-hidden group transition-all hover:scale-[1.02] hover:shadow-blue-500/10">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+                <Heart className="w-12 h-12 mx-auto mb-6 text-white animate-pulse" />
+                <h3 className="text-white font-black text-lg uppercase tracking-[0.25em] mb-8 text-center italic">Ofertas e Dízimos</h3>
                 
-                <div className="space-y-4">
-                   <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 text-center">
-                      <span className="text-[9px] font-black text-blue-400 uppercase block mb-1 tracking-widest">CHAVE PIX</span>
-                      <p className="text-xs font-black text-white select-all">{config?.pix_chave}</p>
+                <div className="space-y-6">
+                   <div className="bg-white/10 backdrop-blur-xl p-6 rounded-3xl border border-white/20 text-center shadow-inner">
+                      <span className="text-[10px] font-black text-blue-200 uppercase block mb-2 tracking-[0.3em]">CHAVE PIX</span>
+                      <p className="text-sm md:text-base font-black text-white select-all tracking-tight break-all">
+                        {config?.pix_chave}
+                      </p>
                    </div>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase text-center tracking-widest">
+                   <p className="text-xs text-blue-100 font-black uppercase text-center tracking-[0.2em] opacity-80">
                       {config?.banco_nome}
                    </p>
                 </div>
@@ -285,15 +285,17 @@ const LandingPage = () => {
           </div>
 
           {/* Coluna 3: Logo e Direitos */}
-          <div className="flex flex-col items-center lg:items-end text-center lg:text-right">
-            <img src="/logo.png" alt="Logo Footer" className="w-16 h-16 mb-6 opacity-20 grayscale hover:grayscale-0 transition-all rounded-full object-cover" />
-            <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-              © 2026 AD CAPITAL
-            </p>
-            <p className="text-slate-700 text-[9px] font-bold uppercase tracking-widest leading-loose">
-              Todos os direitos reservados<br/>
-              <span className="opacity-50 text-[8px]">Desenvolvido pelo AntiGravity AI</span>
-            </p>
+          <div className="flex flex-col items-center lg:items-end text-center lg:text-right space-y-6">
+            <img src="/logo.png" alt="Logo Footer" className="w-20 h-20 opacity-30 grayscale hover:grayscale-0 transition-all rounded-full object-cover shadow-2xl" />
+            <div>
+              <p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em] mb-2">
+                © 2026 AD CAPITAL
+              </p>
+              <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest leading-loose">
+                Direitos reservados<br/>
+                <span className="opacity-40">Desenvolvido pelo AntiGravity AI</span>
+              </p>
+            </div>
           </div>
 
         </div>
