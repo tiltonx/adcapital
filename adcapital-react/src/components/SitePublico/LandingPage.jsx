@@ -264,20 +264,20 @@ const LandingPage = () => {
           </div>
 
           {/* Coluna 2: Ofertas e Dízimos (Centro) */}
-          <div className="flex flex-col items-center py-4 lg:py-0">
-             <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-10 rounded-[3rem] shadow-2xl border border-white/10 w-full max-w-[380px] relative overflow-hidden group transition-all hover:scale-[1.02] hover:shadow-blue-500/10">
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+          <div className="flex flex-col items-center py-4 lg:py-0 w-full">
+             <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/20 w-full max-w-[480px] relative overflow-hidden group transition-all hover:scale-[1.02]">
+                <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
                 <Heart className="w-12 h-12 mx-auto mb-6 text-white animate-pulse" />
-                <h3 className="text-white font-black text-lg uppercase tracking-[0.25em] mb-8 text-center italic">Ofertas e Dízimos</h3>
+                <h3 className="text-white font-black text-xl uppercase tracking-[0.3em] mb-10 text-center italic">Ofertas e Dízimos</h3>
                 
                 <div className="space-y-6">
-                   <div className="bg-white/10 backdrop-blur-xl p-6 rounded-3xl border border-white/20 text-center shadow-inner">
-                      <span className="text-[10px] font-black text-blue-200 uppercase block mb-2 tracking-[0.3em]">CHAVE PIX</span>
-                      <p className="text-sm md:text-base font-black text-white select-all tracking-tight break-all">
+                   <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/30 text-center shadow-2xl">
+                      <span className="text-[10px] font-black text-blue-200 uppercase block mb-3 tracking-[0.4em]">CHAVE PIX</span>
+                      <p className="text-sm md:text-xl font-black text-white select-all tracking-tight whitespace-nowrap">
                         {config?.pix_chave}
                       </p>
                    </div>
-                   <p className="text-xs text-blue-100 font-black uppercase text-center tracking-[0.2em] opacity-80">
+                   <p className="text-sm text-blue-100 font-black uppercase text-center tracking-[0.3em] opacity-90">
                       {config?.banco_nome}
                    </p>
                 </div>
