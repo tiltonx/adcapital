@@ -1,3 +1,4 @@
+import json
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
@@ -132,6 +133,13 @@ class MembroViewSet(viewsets.ModelViewSet):
         membro = serializer.save()
         parentescos_data = self.request.data.get('parentescos_novo', [])
         
+        # Se vier de um FormData como string JSON
+        if isinstance(parentescos_data, str):
+            try:
+                parentescos_data = json.loads(parentescos_data)
+            except:
+                parentescos_data = []
+        
         if self.action in ['update', 'partial_update']:
             Parentesco.objects.filter(membro_origem=membro).delete()
 
@@ -184,6 +192,13 @@ class AutoCadastroMembroView(APIView):
             membro = serializer.save()
             # Lógica simplificada de parentesco para o auto-cadastro
             parentescos_data = request.data.get('parentescos_novo', [])
+
+            # Se vier de um FormData como string JSON
+            if isinstance(parentescos_data, str):
+                try:
+                    parentescos_data = json.loads(parentescos_data)
+                except:
+                    parentescos_data = []
             if membro_existente:
                 Parentesco.objects.filter(membro_origem=membro).delete()
             

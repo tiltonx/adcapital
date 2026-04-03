@@ -18,16 +18,25 @@ class Membro(models.Model):
         ('COOPERADOR', 'Cooperador(a)'),
     ]
 
-    GENERO_CHOICES = [('M', 'Masculino'), ('F', 'Feminino')]
+    GENERO_CHOICES = [('VARAO', 'Varão'), ('VAROA', 'Varoa')]
     STATUS_CHOICES = [('LIGADO', 'Ligado'), ('DESLIGADO', 'Desligado')]
+    ESTADO_CIVIL_CHOICES = [
+        ('SOLTEIRO', 'Solteiro(a)'),
+        ('CASADO', 'Casado(a)'),
+        ('DIVORCIADO', 'Divorciado(a)'),
+        ('VIUVO', 'Viúvo(a)'),
+    ]
 
     # Dados Pessoais
     nome = models.CharField(max_length=255)
     cpf = models.CharField(max_length=14, unique=True)
+    foto = models.ImageField(upload_to='membros/fotos/', null=True, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
-    genero = models.CharField(max_length=1, choices=GENERO_CHOICES, default='M')
+    genero = models.CharField(max_length=10, choices=GENERO_CHOICES, default='VARAO')
+    estado_civil = models.CharField(max_length=20, choices=ESTADO_CIVIL_CHOICES, default='SOLTEIRO')
     data_nascimento = models.DateField(null=True, blank=True)
+    naturalidade = models.CharField(max_length=2, blank=True, null=True, verbose_name="UF de Nascimento")
     
     # Hierarquia e Status
     funcao = models.ForeignKey(Funcao, on_delete=models.SET_NULL, null=True, blank=True)
@@ -45,8 +54,11 @@ class Membro(models.Model):
     
     # Outros
     observacoes = models.TextField(blank=True)
+    motivo_entrada = models.TextField(blank=True, null=True)
+    motivo_saida = models.TextField(blank=True, null=True)
     data_entrada = models.DateField(null=True, blank=True)
     data_saida = models.DateField(null=True, blank=True)
+    unidade = models.CharField(max_length=100, default='Sede')
 
     def save(self, *args, **kwargs):
         if self.nome:

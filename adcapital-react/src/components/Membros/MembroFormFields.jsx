@@ -64,6 +64,46 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                 </div>
 
                 <div className="flex flex-col">
+                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Gênero</label>
+                     <select
+                         className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+                         value={formData.genero || 'VARAO'}
+                         onChange={e => handleChange('genero', e.target.value)}
+                     >
+                         <option value="VARAO">Varão</option>
+                         <option value="VAROA">Varoa</option>
+                     </select>
+                </div>
+
+                <div className="flex flex-col">
+                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Estado Civil</label>
+                     <select
+                         className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+                         value={formData.estado_civil || 'SOLTEIRO'}
+                         onChange={e => handleChange('estado_civil', e.target.value)}
+                     >
+                         <option value="SOLTEIRO">Solteiro(a)</option>
+                         <option value="CASADO">Casado(a)</option>
+                         <option value="DIVORCIADO">Divorciado(a)</option>
+                         <option value="VIUVO">Viúvo(a)</option>
+                     </select>
+                </div>
+
+                <div className="flex flex-col">
+                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Naturalidade (UF)</label>
+                     <select
+                         className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+                         value={formData.naturalidade || ''}
+                         onChange={e => handleChange('naturalidade', e.target.value)}
+                     >
+                         <option value="">Selecione...</option>
+                         {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                             <option key={uf} value={uf}>{uf}</option>
+                         ))}
+                     </select>
+                </div>
+
+                <div className="flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Função na Igreja</label>
                     <select
                         className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-blue-900 mb-2"
@@ -117,6 +157,53 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                         </div>
                     </>
                 )}
+
+                <div className="flex flex-col md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Motivo da Entrada</label>
+                    <textarea
+                        className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
+                        placeholder="Ex: Mudança de cidade, Reconciliação, etc."
+                        value={formData.motivo_entrada || ''}
+                        onChange={e => handleChange('motivo_entrada', e.target.value)}
+                    />
+                </div>
+
+                {!isPublic && (
+                    <div className="flex flex-col md:col-span-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Motivo da Saída</label>
+                        <textarea
+                            className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
+                            placeholder="Descreva o motivo caso o membro esteja sendo desligado."
+                            value={formData.motivo_saida || ''}
+                            onChange={e => handleChange('motivo_saida', e.target.value)}
+                        />
+                    </div>
+                )}
+
+                <div className="flex flex-col">
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Unidade</label>
+                    <input
+                        className="p-3 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-500 cursor-not-allowed"
+                        value={formData.unidade || 'Sede'}
+                        readOnly
+                    />
+                </div>
+
+                <div className="flex flex-col">
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Foto do Membro</label>
+                    <input
+                        type="file"
+                        className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-[10px]"
+                        accept="image/*"
+                        onChange={e => handleChange('foto', e.target.files[0])}
+                    />
+                    {formData.foto && typeof formData.foto === 'string' && (
+                        <div className="mt-2 flex items-center gap-2">
+                            <img src={formData.foto} alt="Preview" className="w-10 h-10 rounded-full object-cover border" />
+                            <span className="text-[10px] text-slate-400">Foto atual arquivada</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* SEÇÃO 2: Localização */}

@@ -8,9 +8,16 @@ export function useCadastroMembroForm(membro, membros, graus, onClose, onSuccess
         telefone: '',
         funcao: 'Membro',
         cpf: '',
+        genero: 'VARAO',
+        estado_civil: 'SOLTEIRO',
+        naturalidade: '',
         data_nascimento: '',
         data_entrada: '',
         data_saida: '',
+        motivo_entrada: '',
+        motivo_saida: '',
+        unidade: 'Sede',
+        foto: null,
         logradouro: '',
         numero: '',
         complemento: '',
@@ -81,18 +88,25 @@ export function useCadastroMembroForm(membro, membros, graus, onClose, onSuccess
                     grau: p.grau
                 }));
 
-            const payload = {
-                ...formData,
-                parentescos_novo: parentescosValidos,
-                // Garantir que campos vazios sejam enviados como null para o Django não reclamar
-                data_nascimento: formData.data_nascimento || null,
-                data_entrada: formData.data_entrada || null,
-                data_saida: formData.data_saida || null,
-                email: formData.email || null,
-                telefone: formData.telefone || null,
-            };
+            // Para suportar upload de foto, usamos FormData
+            const data = new FormData();
+            
+            // Adiciona campos básicos
+            Object.keys(formData).forEach(key => {
+                const value = formData[key];
+                
+                if (key === 'parentescos_novo') {
+                    data.append(key, JSON.stringify(parentescosValidos));
+                } else if (key === 'foto') {
+                    if (value instanceof File) data.append(key, value);
+                } else if (['data_nascimento', 'data_entrada', 'data_saida', 'email', 'telefone'].includes(key)) {
+                    data.append(key, value || "");
+                } else if (value !== null && value !== undefined) {
+                    data.append(key, value);
+                }
+            });
 
-            await membroService.salvar(formData.id, payload);
+            await membroService.salvar(formData.id, data);
 
             if (onSuccess) await onSuccess();
             if (onClose) onClose();

@@ -26,10 +26,12 @@ export default function AutoCadastroPage() {
     
     const [formData, setFormData] = useState({
         nome: '', cpf: '', email: '', telefone: '',
-        genero: 'M', data_nascimento: '',
+        genero: 'VARAO', estado_civil: 'SOLTEIRO',
+        data_nascimento: '', naturalidade: '',
         funcao: 'Membro', logradouro: '', numero: '',
         complemento: '', bairro: '', cidade: 'Brasília',
-        uf: 'DF', cep: ''
+        uf: 'DF', cep: '', motivo_entrada: '', unidade: 'Sede',
+        foto: null
     });
 
     const handleChallenge = async (e) => {
@@ -74,15 +76,32 @@ export default function AutoCadastroPage() {
         setLoading(true);
         setError('');
         try {
-            // Limpeza de campos de data: se estiver vazio, envia como null para evitar erro 400
-            const cleanedData = { ...formData };
-            if (!cleanedData.data_nascimento) cleanedData.data_nascimento = null;
-
-            // Chamada para a nova Rota Direta de Auto-Cadastro curta
-            const res = await axios.post(`${BASE_HOST}/c/`, {
-                ...cleanedData,
-                sync_resposta: resposta
+            // Usamos FormData para suportar upload de arquivos (foto)
+            const data = new FormData();
+            
+            // Adicionamos todos os campos ao FormData
+            Object.keys(formData).forEach(key => {
+                const value = formData[key];
+                if (value !== null && value !== undefined) {
+                    // Se for a foto, só adicionamos se houver um arquivo selecionado
+                    if (key === 'foto') {
+                        if (value instanceof File) data.append(key, value);
+                    } else if (key === 'data_nascimento' && !value) {
+                        // Ignora data de nascimento vazia
+                    } else {
+                        data.append(key, value);
+                    }
+                }
             });
+
+            // Resposta de segurança necessária para o endpoint público
+            data.append('sync_resposta', resposta);
+
+            // Chamada para a Rota Direta de Auto-Cadastro
+            const res = await axios.post(`${BASE_HOST}/c//`, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
             if (res.data.success) {
                 setStep('success');
             }
