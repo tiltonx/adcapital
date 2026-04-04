@@ -106,13 +106,35 @@ export default function SettingsPage() {
   };
 
   const handleAddFoto = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('imagem', file);
-    formData.append('legenda', 'Foto da Igreja');
-    await configuracaoService.uploadFotoGaleria(formData);
-    carregarDados();
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    setLoading(true);
+    let sucessos = 0;
+    
+    try {
+      // Faz o upload de cada arquivo individualmente para o Cloudinary via Backend
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('imagem', file);
+        formData.append('legenda', `Foto da Igreja - ${new Date().toLocaleDateString()}`);
+        
+        await configuracaoService.uploadFotoGaleria(formData);
+        sucessos++;
+      }
+      
+      if (sucessos > 0) {
+        alert(`${sucessos} foto(s) carregada(s) com sucesso na galeria!`);
+      }
+    } catch (err) {
+      console.error("Erro no upload:", err);
+      alert("Houve um problema ao carregar uma ou mais fotos. Verifique o tamanho do arquivo ou sua conexão.");
+    } finally {
+      await carregarDados(); // Recarrega para exibir as novas fotos
+      setLoading(false);
+      // Limpa o valor do input para permitir selecionar os mesmos arquivos de novo se desejar
+      e.target.value = '';
+    }
   };
 
   const handleSalvarProg = async () => {
