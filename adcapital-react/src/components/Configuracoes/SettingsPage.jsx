@@ -95,6 +95,16 @@ export default function SettingsPage() {
     setLoading(false);
   };
 
+  const salvarSeguranca = async () => {
+    setLoading(true);
+    try {
+      await configuracaoService.savePortalConfig(portalConfig);
+      alert("Segurança do Portal atualizada!");
+      await carregarDados();
+    } catch(e) { console.error(e); }
+    setLoading(false);
+  };
+
   const handleAddFoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -276,6 +286,47 @@ export default function SettingsPage() {
                    )}
                 </div>
              </section>
+          )}
+
+          {/* --- ABA SEGURANÇA --- */}
+          {aba === 'seguranca' && portalConfig && (
+            <section className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+               <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                  <h2 className="font-black uppercase text-xs tracking-widest text-slate-800">Segurança do Portal de Cadastro</h2>
+                  <button onClick={salvarSeguranca} className="bg-blue-600 text-white px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
+                    SALVAR
+                  </button>
+               </div>
+               <div className="p-8 space-y-10">
+                  <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className={cn("w-14 h-8 rounded-full relative cursor-pointer transition-all", portalConfig.is_ativo ? "bg-emerald-500" : "bg-slate-300")}
+                           onClick={() => setPortalConfig({...portalConfig, is_ativo: !portalConfig.is_ativo})}>
+                        <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm", portalConfig.is_ativo ? "translate-x-6" : "translate-x-0")} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-xs text-slate-800 uppercase tracking-widest">Portal Ativo</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Define se o auto-cadastro está aberto ao público</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Field label="Pergunta de Acesso" value={portalConfig.pergunta} onChange={v => setPortalConfig({...portalConfig, pergunta: v})} />
+                      <Field label="Resposta Correta (Senha)" value={portalConfig.resposta} onChange={v => setPortalConfig({...portalConfig, resposta: v})} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <Info className="text-blue-600 shrink-0" size={20} />
+                    <div>
+                      <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest mb-1">Dica de Segurança</p>
+                      <p className="text-[10px] text-blue-800/60 font-bold leading-relaxed">
+                        A "Resposta Correta" funciona como uma senha compartilhada para sua igreja. Informe esta resposta aos membros que desejam se cadastrar. O sistema não diferencia maiúsculas de minúsculas.
+                      </p>
+                    </div>
+                  </div>
+               </div>
+            </section>
           )}
 
           {/* --- ABA ARQUITETURA --- */}

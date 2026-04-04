@@ -7,8 +7,9 @@ import MembroFormFields from './MembroFormFields';
 const BASE_HOST = 'https://api.adcapitaligreja.com.br/api';
 
 export default function AutoCadastroPage() {
-    // 1. Estratégia de Independência: Pergunta e Funções fixas para evitar erros de carregamento
-    const [config] = useState({ is_ativo: true, pergunta: 'Qual o seu melhor amigo?' });
+    // 1. Estratégia de Independência: Funções fixas para estabilidade, mas Pergunta dinâmica
+    const [pergunta, setPergunta] = useState('Qual o seu melhor amigo?');
+    const [portalAtivo, setPortalAtivo] = useState(true);
     const [funcoes] = useState([
         { id: 1, nome: 'Membro' },
         { id: 2, nome: 'Obreiro' },
@@ -23,6 +24,21 @@ export default function AutoCadastroPage() {
     const [resposta, setResposta] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const res = await axios.get(`${BASE_HOST}/configuracao-portal/publica/`);
+                if (res.data) {
+                    setPergunta(res.data.pergunta || 'Qual o seu melhor amigo?');
+                    setPortalAtivo(res.data.is_ativo);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar config:", err);
+            }
+        };
+        fetchConfig();
+    }, []);
     
     const [formData, setFormData] = useState({
         nome: '', cpf: '', email: '', telefone: '',
@@ -98,7 +114,7 @@ export default function AutoCadastroPage() {
             data.append('sync_resposta', resposta);
 
             // Chamada para a Rota Direta de Auto-Cadastro
-            const res = await axios.post(`${BASE_HOST}/c//`, data, {
+            const res = await axios.post(`${BASE_HOST}/c/`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -131,7 +147,8 @@ export default function AutoCadastroPage() {
                     <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mb-8">Cadastro e Atualização de Dados</p>
                     
                     <div className="w-full space-y-4">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">{config.pergunta}</label>
+                        {!portalAtivo && <p className="text-rose-500 text-xs font-black text-center mb-4 uppercase">Portal Desativado no Momento</p>}
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">{pergunta}</label>
                         <input 
                             className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 font-bold text-blue-900 transition-all text-center uppercase"
                             value={resposta}
