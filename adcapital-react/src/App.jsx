@@ -115,7 +115,7 @@ function App() {
 
   useEffect(() => {
     // Log para Debug - Veja isso no console do navegador (F12)
-    console.log("Versão do App: SiteInstitucional-v1.2");
+    console.log("Versão do App: SiteInstitucional-v1.3");
     console.log("URL Atual:", window.location.href);
 
     const handleHashChange = () => setHash(window.location.hash);
