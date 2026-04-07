@@ -110,9 +110,10 @@ if 'DATABASE_URL' in os.environ:
         conn_max_age=600,
         conn_health_checks=True,
         ssl_require=True,
-        # Importante: Timeout para evitar hangs no pooler do Supabase
-        connect_timeout=10
     )
+    # Definindo timeout de conexão via OPTIONS
+    DATABASES['default']['OPTIONS'] = DATABASES['default'].get('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['connect_timeout'] = 10
 
 
 # Password validation
