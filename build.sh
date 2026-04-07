@@ -5,4 +5,17 @@ set -o errexit
 pip install -r requirements.txt
 
 python manage.py collectstatic --no-input
-python manage.py migrate
+
+# Retry migrate up to 3 times
+echo "Running migrations..."
+for i in {1..3}; do
+  python manage.py migrate && break || {
+    if [ $i -lt 3 ]; then
+      echo "Migration failed. Retrying in 5 seconds... (Attempt $i/3)"
+      sleep 5
+    else
+      echo "Migration failed after 3 attempts."
+      exit 1
+    fi
+  }
+done

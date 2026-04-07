@@ -107,10 +107,14 @@ DATABASES = {
 
 if 'DATABASE_URL' in os.environ:
     DATABASES['default'] = dj_database_url.config(
-        conn_max_age=0, # Obrigatório por usar o Pooler do Supabase (porta 6543)
+        conn_max_age=0, 
         conn_health_checks=True,
         ssl_require=True,
     )
+    # Aumentar timeout de conexão para maior estabilidade com o Pooler do Supabase
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 30,
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
