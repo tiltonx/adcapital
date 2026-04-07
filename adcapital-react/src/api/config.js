@@ -25,9 +25,7 @@ api.interceptors.response.use(
         // Se for erro de timeout ou rede (sem resposta do servidor)
         if (error.code === 'ECONNABORTED' || !error.response) {
             console.error("Erro de conexão ou tempo de resposta esgotado.");
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            window.location.href = '/';
+            // REMOVIDO: window.location.href = '/';  <-- Causava loop infinito
             return Promise.reject(error);
         }
 

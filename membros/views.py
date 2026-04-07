@@ -74,7 +74,9 @@ class ConfiguracaoPortalViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
+        config = ConfiguracaoPortal.objects.filter(id=1).first()
+        if not config:
+            config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
         serializer = self.get_serializer(config)
         return Response(serializer.data)
 
@@ -96,7 +98,9 @@ class ConfiguracaoSiteViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def list(self, request, *args, **kwargs):
-        config, _ = ConfiguracaoSite.objects.get_or_create(id=1)
+        config = ConfiguracaoSite.objects.filter(id=1).first()
+        if not config:
+             config, _ = ConfiguracaoSite.objects.get_or_create(id=1)
         serializer = self.get_serializer(config)
         return Response(serializer.data)
 
