@@ -1,6 +1,7 @@
 // src/components/Membros/AutoCadastroPage.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/config';
+import StatusView from '../Common/StatusView';
 import MembroFormFields from './MembroFormFields';
 
 // URL Base da API (FIXA para evitar confusão de domínios)
@@ -27,14 +28,18 @@ export default function AutoCadastroPage() {
 
     React.useEffect(() => {
         const fetchConfig = async () => {
+            setLoading(true);
             try {
-                const res = await axios.get(`${BASE_HOST}/configuracao-portal/publica/`);
+                const res = await api.get(`/configuracao-portal/publica/`);
                 if (res.data) {
                     setPergunta(res.data.pergunta || 'Qual o seu melhor amigo?');
                     setPortalAtivo(res.data.is_ativo);
                 }
             } catch (err) {
                 console.error("Erro ao carregar config:", err);
+                setError("O servidor está demorando a responder. Tente novamente em instantes.");
+            } finally {
+                setLoading(false);
             }
         };
         fetchConfig();
@@ -55,10 +60,8 @@ export default function AutoCadastroPage() {
         setLoading(true);
         setError('');
         try {
-            // Chamada para a nova Rota Direta (bypassing DRF e caminhos longos)
-            const res = await axios.post(`${BASE_HOST}/v/`, { resposta });
+            const res = await api.post(`/v/`, { resposta });
             
-            // Verificação RÍGIDA: só libramos o acesso se o sucesso for explícito (true)
             if (res.data && res.data.success === true) {
                 setStep('form');
             } else {
@@ -114,7 +117,7 @@ export default function AutoCadastroPage() {
             data.append('sync_resposta', resposta);
 
             // Chamada para a Rota Direta de Auto-Cadastro
-            const res = await axios.post(`${BASE_HOST}/c/`, data, {
+            const res = await api.post(`/c/`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -146,7 +149,8 @@ export default function AutoCadastroPage() {
                     <h1 className="text-2xl font-black text-blue-900 uppercase tracking-tighter mb-2">Auto-Atendimento</h1>
                     <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mb-8">Cadastro e Atualização de Dados</p>
                     
-                    <div className="w-full space-y-4">
+                    <div className="w-full space-y-4 relative min-h-[150px]">
+                        <StatusView loading={loading} />
                         {!portalAtivo && <p className="text-rose-500 text-xs font-black text-center mb-4 uppercase">Portal Desativado no Momento</p>}
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">{pergunta}</label>
                         <input 
@@ -155,11 +159,12 @@ export default function AutoCadastroPage() {
                             onChange={e => setResposta(e.target.value)}
                             placeholder="Sua resposta aqui..."
                             required
+                            disabled={loading || !portalAtivo}
                             autoFocus
                         />
-                        {error && <p className="text-rose-500 text-xs font-bold text-center mt-2">{error}</p>}
+                        {error && <p className="text-rose-500 text-[10px] font-bold text-center mt-2 uppercase tracking-wide">{error}</p>}
                         
-                        <button type="submit" disabled={loading} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all mt-4">
+                        <button type="submit" disabled={loading || !portalAtivo} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all mt-4 disabled:opacity-50">
                             {loading ? 'Verificando...' : 'Entrar no Formulário'}
                         </button>
                     </div>
@@ -194,7 +199,8 @@ export default function AutoCadastroPage() {
                     <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.2em] mt-2">Membro AD Capital Igreja</p>
                 </header>
                 
-                <form onSubmit={handleSave} className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100">
+                <form onSubmit={handleSave} className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 relative">
+                    <StatusView loading={loading} />
                     <MembroFormFields 
                         formData={formData}
                         handleChange={handleChange}
@@ -203,14 +209,18 @@ export default function AutoCadastroPage() {
                         isPublic={true}
                     />
                     
-                    {error && <p className="text-rose-500 text-xs font-bold text-center mt-6">{error} - Tente novamente em alguns minutos.</p>}
+                    {error && (
+                        <div className="mt-6 p-4 bg-rose-50 rounded-2xl border border-rose-100 italic">
+                            <p className="text-rose-500 text-xs font-bold text-center">{error}</p>
+                        </div>
+                    )}
                     
                     <div className="mt-12 flex flex-col md:flex-row gap-4">
                         <button type="button" onClick={() => window.location.reload()} className="order-2 md:order-1 flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
                             Cancelar
                         </button>
                         <button type="submit" disabled={loading} className="order-1 md:order-2 flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50 text-sm">
-                            {loading ? 'Enviando...' : 'Finalizar Cadastro ✅'}
+                            {loading ? 'Sincronizando...' : 'Finalizar Cadastro ✅'}
                         </button>
                     </div>
                 </form>

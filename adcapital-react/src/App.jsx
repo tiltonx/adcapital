@@ -159,7 +159,7 @@ function App() {
   if (!token) {
     // Se o usuário estiver no subdomínio sistema, mostra login. 
     // Caso contrário (domínios genéricos ou IP), mostra o site por segurança/SEO.
-    if (currentHost.startsWith('sistema.')) {
+    if (currentHost.startsWith('sistema.') || currentHost === 'localhost' || currentHash.includes('sistema') || currentHash.includes('admin')) {
        return <Login />;
     }
     return <LandingPage />;

@@ -29,14 +29,14 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // Se o erro for 401 e não for uma tentativa de refresh (gerando loop)
+        // Se o erro for 401 (Não autorizado)
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             const refreshToken = localStorage.getItem('refresh_token');
 
+            // Se temos um refresh token, tentamos renovar a sessão automaticamente
             if (refreshToken) {
                 try {
-                    // Tenta renovar o token
                     const response = await axios.post(`${api.defaults.baseURL}/token/refresh/`, {
                         refresh: refreshToken
                     });
@@ -50,14 +50,18 @@ api.interceptors.response.use(
                         return api(originalRequest);
                     }
                 } catch (refreshError) {
-                    // Se o refresh falhar (token expirado ou inválido), desloga
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    window.location.href = '/';
+                    console.error("Falha Crítica no Refresh Token:", refreshError);
                 }
-            } else {
-                // Se não tem refresh token, vai para o login
-                localStorage.removeItem('access_token');
+            }
+
+            // Se chegou aqui, ou não tinha refresh token ou o refresh falhou
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+
+            // Redireciona para o login apenas se não estivermos no portal de auto-cadastro
+            // para evitar que erros no portal público joguem o usuário na tela de login administrativo
+            const isPublicPortal = window.location.hash.includes('cadastro');
+            if (!isPublicPortal) {
                 window.location.href = '/';
             }
         }

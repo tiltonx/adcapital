@@ -14,7 +14,9 @@ import {
   Settings,
   ShieldAlert,
   Image,
-  Layers
+  Layers,
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -119,6 +121,22 @@ export default function SettingsPage() {
     setLoading(false);
   };
 
+  const handleDelFoto = async (id) => {
+    if (confirm('Excluir esta foto da galeria?')) {
+      setDeletandoId(id);
+      try {
+        await configuracaoService.excluirFotoGaleria(id);
+        setSucesso(true);
+        setTimeout(() => setSucesso(false), 3000);
+        await carregarDados();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeletandoId(null);
+      }
+    }
+  };
+
   const handleAddFoto = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -160,8 +178,17 @@ export default function SettingsPage() {
 
   const handleDelProg = async (id) => {
     if (confirm('Excluir este horário?')) {
-      await configuracaoService.deleteProgramacao(id);
-      carregarDados();
+      setDeletandoId(id); // Reusa o estado de deletandoId para Programação também
+      try {
+        await configuracaoService.deleteProgramacao(id);
+        setSucesso(true);
+        setTimeout(() => setSucesso(false), 3000);
+        await carregarDados();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeletandoId(null);
+      }
     }
   };
 
@@ -300,8 +327,18 @@ export default function SettingsPage() {
                           <p className="font-bold text-slate-800">{p.titulo}</p>
                           <p className="text-xs font-bold text-slate-400">{p.horario}</p>
                        </div>
-                       <button onClick={() => handleDelProg(p.id)} className="p-3 text-rose-500 opacity-20 group-hover:opacity-100 transition-all hover:bg-rose-50 rounded-xl">
-                          <Trash2 size={18} />
+                       <button 
+                         onClick={() => handleDelProg(p.id)} 
+                         disabled={deletandoId !== null}
+                         className={cn("p-3 rounded-xl transition-all", 
+                           deletandoId === p.id ? "text-blue-600 bg-blue-50" : "text-rose-500 opacity-20 group-hover:opacity-100 hover:bg-rose-50"
+                         )}
+                       >
+                          {deletandoId === p.id ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
                        </button>
                     </div>
                   ))}
@@ -326,9 +363,22 @@ export default function SettingsPage() {
                    {galeria.map(f => (
                      <div key={f.id} className="aspect-square bg-slate-50 rounded-[2rem] overflow-hidden relative group border border-slate-100">
                         <img src={f.imagem} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-rose-600/90 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2">
-                           <button onClick={() => configuracaoService.excluirFotoGaleria(f.id).then(carregarDados)} className="text-white font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                              <Trash2 size={16} /> Excluir
+                        <div className={cn("absolute inset-0 transition-all flex flex-col items-center justify-center gap-2", 
+                          deletandoId === f.id ? "bg-white/90 opacity-100" : "bg-rose-600/90 opacity-0 group-hover:opacity-100"
+                        )}>
+                           <button 
+                             onClick={() => handleDelFoto(f.id)} 
+                             disabled={deletandoId !== null}
+                             className={cn("font-black text-xs uppercase tracking-widest flex items-center gap-2", 
+                               deletandoId === f.id ? "text-blue-600" : "text-white"
+                             )}
+                           >
+                              {deletandoId === f.id ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
+                              {deletandoId === f.id ? 'Excluindo...' : 'Excluir'}
                            </button>
                         </div>
                      </div>
@@ -564,6 +614,9 @@ function Field({ label, value, onChange, onBlur, isTextArea, isUpper }) {
 
 function SettingsBox({ title, color, data, onAdd, onDelete }) {
   const [val, setVal] = useState('');
+  const [deletandoId, setDeletandoId] = useState(null);
+  const [sucesso, setSucesso] = useState(false);
+
   const styles = {
     blue: { bg: "bg-blue-600", text: "text-blue-600", light: "bg-blue-50", border: "border-blue-100" },
     emerald: { bg: "bg-emerald-600", text: "text-emerald-600", light: "bg-emerald-50", border: "border-emerald-100" },
@@ -572,9 +625,32 @@ function SettingsBox({ title, color, data, onAdd, onDelete }) {
   
   const currentStyle = styles[color] || styles.blue;
 
+  const handleExcluir = async (id) => {
+    if (confirm('Deseja realmente excluir este item?')) {
+      setDeletandoId(id);
+      try {
+        await onDelete(id);
+        setSucesso(true);
+        setTimeout(() => setSucesso(false), 3000);
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao excluir. Tente novamente.");
+      } finally {
+        setDeletandoId(null);
+      }
+    }
+  };
+
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden h-[500px] flex flex-col">
-      <div className={cn("p-6 text-center font-black uppercase text-xs tracking-widest text-white", currentStyle.bg)}>{title}</div>
+    <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden h-[500px] flex flex-col relative">
+      <div className={cn("p-6 text-center font-black uppercase text-xs tracking-widest text-white relative transition-all", currentStyle.bg, sucesso && "bg-emerald-500")}>
+        {sucesso ? (
+          <div className="flex items-center justify-center gap-2 animate-in slide-in-from-top-2">
+            <CheckCircle size={14} /> Sucesso!
+          </div>
+        ) : title}
+      </div>
+      
       <div className="p-6">
         <div className={cn("flex items-center gap-2 p-1.5 rounded-2xl border transition-all focus-within:ring-4", currentStyle.light, currentStyle.border, color === 'blue' ? 'focus-within:ring-blue-500/10' : color === 'emerald' ? 'focus-within:ring-emerald-500/10' : 'focus-within:ring-rose-500/10')}>
            <input 
@@ -607,9 +683,21 @@ function SettingsBox({ title, color, data, onAdd, onDelete }) {
         ) : (
           data.map(d => (
             <div key={d.id} className="flex justify-between items-center p-4 bg-slate-50/50 rounded-2xl border border-slate-50 hover:bg-white hover:border-slate-100 hover:shadow-sm transition-all group">
-               <span className="font-bold text-slate-700 text-sm">{d.nome}</span>
-               <button onClick={() => onDelete(d.id)} className="p-2 text-slate-200 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
-                  <Trash2 size={16} />
+               <span className={cn("font-bold text-sm transition-all", deletandoId === d.id ? "text-slate-300 italic" : "text-slate-700")}>
+                {d.nome}
+               </span>
+               <button 
+                 onClick={() => handleExcluir(d.id)} 
+                 disabled={deletandoId !== null}
+                 className={cn("p-2 rounded-lg transition-all", 
+                   deletandoId === d.id ? "text-blue-600 bg-blue-50" : "text-slate-200 hover:text-rose-500 hover:bg-rose-50"
+                 )}
+               >
+                  {deletandoId === d.id ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}
                </button>
             </div>
           ))
