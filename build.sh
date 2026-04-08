@@ -9,7 +9,7 @@ python manage.py collectstatic --no-input
 # Retry migrate up to 3 times
 echo "Running migrations..."
 for i in {1..3}; do
-  python manage.py migrate && break || {
+  python manage.py migrate && python repair_db.py && break || {
     if [ $i -lt 3 ]; then
       echo "Migration failed. Retrying in 5 seconds... (Attempt $i/3)"
       sleep 5
