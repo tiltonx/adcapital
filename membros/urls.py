@@ -9,7 +9,8 @@ from .views import (
     adicionar_funcao,
     buscar_opcoes_funcao,
     buscar_opcoes_parentesco,
-    buscar_configuracao_publica
+    buscar_configuracao_publica,
+    download_termo_lgpd
 )
 
 from .view_public import (
@@ -37,5 +38,6 @@ urlpatterns = [
     # Rotas Administrativas
     path('funcoes/', adicionar_funcao, name='adicionar-funcao-admin'),
     path('funcoes/<int:pk>/', excluir_funcao, name='excluir-funcao-admin'),
+    path('membros/<int:pk>/download-lgpd/', download_termo_lgpd, name='download-lgpd'),
     path('', include(router.urls)),
 ]

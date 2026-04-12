@@ -60,9 +60,13 @@ def auto_cadastro_direto(request):
 
     if request.method != 'POST':
         return JsonResponse({'error': 'Apenas POST permitido'}, status=405)
-        
     try:
-        data = json.loads(request.body)
+        # Detecta o tipo de conteúdo para saber como ler os dados
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            # Caso FormData (upload de arquivos) ou form-url-encoded
+            data = request.POST.dict()
         
         # Validação de segurança redundante
         config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
@@ -79,9 +83,9 @@ def auto_cadastro_direto(request):
         
         # Usamos o Serializer manualmente (apenas para validação/salvamento)
         if membro_existente:
-            serializer = MembroSerializer(membro_existente, data=data, partial=True)
+            serializer = MembroSerializer(membro_existente, data=data, files=request.FILES, partial=True)
         else:
-            serializer = MembroSerializer(data=data)
+            serializer = MembroSerializer(data=data, files=request.FILES)
 
         if serializer.is_valid():
             membro = serializer.save()

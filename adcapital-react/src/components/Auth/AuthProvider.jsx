@@ -39,6 +39,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  useEffect(() => {
+    // Escuta mudanças no localStorage de outras abas ou do interceptor axios
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('access_token');
+      if (newToken !== token) {
+        setToken(newToken);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check periódico suave para garantir que mudanças na mesma aba (interceptor) propaguem
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [token]);
+
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');

@@ -162,6 +162,18 @@ class MembroViewSet(viewsets.ModelViewSet):
 
     def _salvar_com_parentescos(self, serializer):
         membro = serializer.save()
+        
+        # Se um documento LGPD foi enviado pelo admin, atualiza o status de consentimento
+        try:
+            if 'lgpd_documento' in self.request.data and self.request.data['lgpd_documento']:
+                 membro.lgpd_consentido = True
+                 if not membro.lgpd_data_aceite:
+                      from django.utils import timezone
+                      membro.lgpd_data_aceite = timezone.now()
+                 membro.save()
+        except Exception as e:
+            print(f"Aviso: Erro ao salvar status LGPD no Admin: {e}")
+
         parentescos_data = self.request.data.get('parentescos_novo', [])
         
         # Se vier de um FormData como string JSON
@@ -221,6 +233,47 @@ class AutoCadastroMembroView(APIView):
 
         if serializer.is_valid():
             membro = serializer.save()
+            
+            # --- START LGPD LOGIC (Resilient) ---
+            try:
+                # Set consent true as it's required in the frontend
+                membro.lgpd_consentido = True
+                if not membro.lgpd_data_aceite:
+                     from django.utils import timezone
+                     membro.lgpd_data_aceite = timezone.now()
+                
+                # Generate PDF if it doesn't exist
+                from .utils import gerar_termo_lgpd_pdf
+                nome_arquivo, pdf_file = gerar_termo_lgpd_pdf(membro)
+                membro.lgpd_documento.save(nome_arquivo, pdf_file, save=False)
+                membro.save()
+
+                # Enviar por e-mail
+                if membro.email:
+                    try:
+                        from django.core.mail import EmailMessage
+                        from django.conf import settings
+                        
+                        email_msg = EmailMessage(
+                            subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
+                            body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
+                            from_email=settings.EMAIL_HOST_USER,
+                            to=[membro.email],
+                        )
+                        
+                        # Anexar o PDF
+                        if membro.lgpd_documento:
+                             membro.lgpd_documento.seek(0)
+                             email_msg.attach(nome_arquivo, membro.lgpd_documento.read(), 'application/pdf')
+                             
+                        email_msg.send(fail_silently=True)
+                    except Exception as email_err:
+                        print(f"Erro ao enviar e-mail LGPD para {membro.email}: {email_err}")
+            except Exception as lgpd_err:
+                # Loga o erro mas NÃO quebra o request de cadastro
+                print(f"AVISO: Falha na lógica LGPD (Cadastro salvo no entanto): {lgpd_err}")
+            # --- END LGPD LOGIC ---
+
             # Lógica simplificada de parentesco para o auto-cadastro
             parentescos_data = request.data.get('parentescos_novo', [])
 
@@ -247,7 +300,23 @@ class AutoCadastroMembroView(APIView):
                 "success": True, 
                 "message": "Cadastro realizado/atualizado com sucesso!",
                 "id": membro.id,
-                "is_update": membro_existente is not None
+                "is_update": membro_existente is not None,
+                "lgpd_url": membro.lgpd_documento.url if membro.lgpd_documento else None
             })
         
         return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_termo_lgpd(request, pk):
+    """Endpoint para baixar o termo de LGPD via API usando o Cloudinary"""
+    try:
+        from django.shortcuts import redirect
+        membro = Membro.objects.get(pk=pk)
+        if not membro.lgpd_documento:
+             return Response({"error": "Termo não encontrado para este membro."}, status=404)
+        
+        # Como estamos usando Cloudinary, retornamos a URL direta para download
+        return redirect(membro.lgpd_documento.url)
+    except Membro.DoesNotExist:
+        return Response({"error": "Membro não encontrado."}, status=404)

@@ -254,6 +254,49 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                     />
                 </div>
             </div>
+
+            {/* SEÇÃO 3: Consentimento LGPD */}
+            <div className="pt-6 border-t border-slate-100">
+                <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl flex gap-4 items-start">
+                    <div className="bg-blue-100 p-2 rounded-full hidden sm:block">
+                        <span className="text-xl">📄</span>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-[11px] font-black text-blue-900 uppercase tracking-widest mb-2">Termo de Consentimento - LGPD</h3>
+                        
+                        {isPublic ? (
+                            <p className="text-xs text-slate-500 leading-relaxed text-justify">
+                                Ao finalizar este cadastro, você concorda com os termos da Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018). 
+                                Você autoriza a Igreja Evangélica Assembleia de Deus Ministério na Capital a coletar e armazenar seus dados para uso exclusivo eclesiástico.
+                                <strong className="block mt-2">Um termo formal em PDF será gerado e enviado para o seu e-mail após a conclusão.</strong>
+                            </p>
+                        ) : (
+                            <div className="space-y-4 pt-1">
+                                <p className="text-xs text-slate-600 leading-relaxed text-justify">
+                                    Neste ambiente administrativo, você pode atualizar ou anexar o Termo LGPD assinado por este membro.
+                                </p>
+                                
+                                <div className="flex flex-col">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Documento LGPD (PDF)</label>
+                                    <input
+                                        type="file"
+                                        className="p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-[10px]"
+                                        accept=".pdf"
+                                        onChange={e => handleChange('lgpd_documento', e.target.files[0])}
+                                    />
+                                    {formData.lgpd_consentido && (
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-[10px] font-black uppercase rounded border border-green-200">
+                                                ✅ Termo Salvo Válido
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -97,7 +97,7 @@ export function useCadastroMembroForm(membro, membros, graus, onClose, onSuccess
                 
                 if (key === 'parentescos_novo') {
                     data.append(key, JSON.stringify(parentescosValidos));
-                } else if (key === 'foto') {
+                } else if (key === 'foto' || key === 'lgpd_documento') {
                     if (value instanceof File) data.append(key, value);
                 } else if (['data_nascimento', 'data_entrada', 'data_saida', 'email', 'telefone'].includes(key)) {
                     data.append(key, value || "");

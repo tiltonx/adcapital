@@ -90,6 +90,8 @@ export default function AutoCadastroPage() {
         return v.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
     };
 
+    const [lgpdUrl, setLgpdUrl] = useState('');
+
     const handleSave = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -117,11 +119,14 @@ export default function AutoCadastroPage() {
             data.append('sync_resposta', resposta);
 
             // Chamada para a Rota Direta de Auto-Cadastro
-            const res = await api.post(`/c/`, data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.post(`/c/`, data);
             
             if (res.data.success) {
+                if (res.data.lgpd_url) {
+                    setLgpdUrl(res.data.lgpd_url);
+                    // Dispara o download imediatamente em uma nova aba para evitar pop-up blockers em alguns casos, ou na mesma.
+                    window.open(res.data.lgpd_url, '_blank');
+                }
                 setStep('success');
             }
         } catch (err) {
@@ -179,9 +184,29 @@ export default function AutoCadastroPage() {
                 <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-md w-full border border-emerald-100">
                     <div className="text-4xl mb-6">🎉</div>
                     <h1 className="text-2xl font-black text-emerald-900 uppercase tracking-tighter">Muito Obrigado!</h1>
-                    <p className="text-slate-500 text-sm font-medium leading-relaxed my-8">
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed my-4">
                         Seu cadastro foi salvo com sucesso no banco de dados da AD Capital.
                     </p>
+                    
+                    {lgpdUrl && (
+                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6 text-left">
+                            <h3 className="text-blue-900 font-bold text-sm mb-2">📄 Termo de Proteção de Dados (LGPD)</h3>
+                            <p className="text-xs text-blue-700 leading-relaxed mb-3">
+                                O seu Termo LGPD foi gerado e o download deve iniciar automaticamente. 
+                                Ele também foi enviado para o seu e-mail (caso informado). 
+                                <strong> Por favor, guarde-o para seus registros ou envie para <a href="mailto:igrejaadcapital@gmail.com" className="underline font-bold">igrejaadcapital@gmail.com</a> caso solicitado.</strong>
+                            </p>
+                            <a 
+                                href={lgpdUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="block w-full text-center py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-lg hover:bg-blue-700 transition"
+                            >
+                                Baixar Termo Novamente
+                            </a>
+                        </div>
+                    )}
+
                     <button onClick={() => window.location.reload()} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
                         Voltar ao Início
                     </button>

@@ -17,6 +17,17 @@ api.interceptors.request.use(config => {
 });
 
 // Interceptor de resposta para o refresh do token e tratamento de erros de conexão
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) prom.reject(error);
+        else prom.resolve(token);
+    });
+    failedQueue = [];
+};
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -25,16 +36,27 @@ api.interceptors.response.use(
         // Se for erro de timeout ou rede (sem resposta do servidor)
         if (error.code === 'ECONNABORTED' || !error.response) {
             console.error("Erro de conexão ou tempo de resposta esgotado.");
-            // REMOVIDO: window.location.href = '/';  <-- Causava loop infinito
             return Promise.reject(error);
         }
 
         // Se o erro for 401 (Não autorizado)
         if (error.response?.status === 401 && !originalRequest._retry) {
+            
+            // Se já estivermos tentando renovar o token, enfileira este request
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return api(originalRequest);
+                }).catch(err => Promise.reject(err));
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
+
             const refreshToken = localStorage.getItem('refresh_token');
 
-            // Se temos um refresh token, tentamos renovar a sessão automaticamente
             if (refreshToken) {
                 try {
                     const response = await axios.post(`${api.defaults.baseURL}/token/refresh/`, {
@@ -44,24 +66,30 @@ api.interceptors.response.use(
                     if (response.status === 200) {
                         const { access } = response.data;
                         localStorage.setItem('access_token', access);
-                        
-                        // Atualiza o header do request original e tenta de novo
                         originalRequest.headers.Authorization = `Bearer ${access}`;
+                        
+                        processQueue(null, access);
+                        isRefreshing = false;
                         return api(originalRequest);
                     }
                 } catch (refreshError) {
+                    processQueue(refreshError, null);
+                    isRefreshing = false;
                     console.error("Falha Crítica no Refresh Token:", refreshError);
                 }
+            } else {
+                isRefreshing = false;
             }
 
-            // Se chegou aqui, ou não tinha refresh token ou o refresh falhou
+            // Se chegou aqui, falha total na autenticação
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
 
-            // Redireciona para o login apenas se não estivermos no portal de auto-cadastro
-            // para evitar que erros no portal público joguem o usuário na tela de login administrativo
+            // Redireciona para o login apenas se necessário e se NÃO estivermos já nele
             const isPublicPortal = window.location.hash.includes('cadastro');
-            if (!isPublicPortal) {
+            const isLoginPage = window.location.pathname === '/' || window.location.hash === '#/';
+            
+            if (!isPublicPortal && !isLoginPage) {
                 window.location.href = '/';
             }
         }

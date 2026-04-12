@@ -60,6 +60,11 @@ class Membro(models.Model):
     data_saida = models.DateField(null=True, blank=True)
     unidade = models.CharField(max_length=100, default='Sede')
 
+    # LGPD
+    lgpd_consentido = models.BooleanField(default=False, verbose_name="Termo LGPD Assinado")
+    lgpd_data_aceite = models.DateTimeField(null=True, blank=True, verbose_name="Data de Aceite LGPD")
+    lgpd_documento = models.FileField(upload_to='membros/lgpd/', null=True, blank=True, verbose_name="Documento LGPD Assinado")
+
     def save(self, *args, **kwargs):
         if self.nome:
             self.nome = self.nome.upper()

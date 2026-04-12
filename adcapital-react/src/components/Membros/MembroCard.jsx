@@ -1,31 +1,52 @@
-export default function MembroCard({ m, graus, onEdit, onDelete }) {
+import { Loader2 } from 'lucide-react';
+
+export default function MembroCard({ m, graus, onEdit, onDelete, deletandoId }) {
+    const isDeleting = deletandoId === m.id;
+
     return (
-        <div className="bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between h-full overflow-hidden hover:shadow-lg transition-shadow">
+        <div className={`bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between h-full overflow-hidden transition-all ${isDeleting ? 'opacity-40 grayscale-[0.5] scale-[0.98]' : 'hover:shadow-lg transition-shadow'}`}>
             <div>
                 {/* PRIMEIRA LINHA: Cabeçalho com fundo mais escuro */}
-                <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-start gap-4">
+                <div className={`px-6 py-4 border-b border-slate-100 flex justify-between items-start gap-4 transition-colors ${isDeleting ? 'bg-rose-50' : 'bg-slate-50'}`}>
                     <div className="flex-1">
-                        <h3 className="text-xl font-bold text-blue-900 leading-tight">{m.nome}</h3>
-                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-1">
-                            {m.funcao || 'Membro'}
-                        </p>
+                        <h3 className={`text-xl font-bold leading-tight transition-all ${isDeleting ? 'text-slate-400 italic' : 'text-blue-900'}`}>{m.nome}</h3>
+                        <div className="flex gap-2 items-center mt-1">
+                             <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
+                                 {m.funcao || 'Membro'}
+                             </p>
+                             {m.lgpd_consentido ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-black uppercase rounded border border-green-200" title={`Aceito em: ${m.lgpd_data_aceite ? new Date(m.lgpd_data_aceite).toLocaleString('pt-BR') : 'Data não registrada'}`}>
+                                   ✅ LGPD OK
+                                </span>
+                             ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase rounded border border-amber-200" title="Termo não assinado">
+                                   ⏳ LGPD
+                                </span>
+                             )}
+                        </div>
                     </div>
 
                     {/* Botões de Ação */}
                     <div className="flex gap-2 shrink-0">
                         <button
                             onClick={onEdit}
-                            className="p-2 bg-white text-blue-600 rounded-lg border border-slate-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                            disabled={isDeleting}
+                            className="p-2 bg-white text-blue-600 rounded-lg border border-slate-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm disabled:opacity-20"
                             title="Editar"
                         >
                             ✏️
                         </button>
                         <button
                             onClick={onDelete}
-                            className="p-2 bg-white text-red-600 rounded-lg border border-slate-200 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                            disabled={isDeleting}
+                            className={`p-2 rounded-lg border transition-all shadow-sm flex items-center justify-center min-w-[38px] ${
+                                isDeleting 
+                                    ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                                    : 'bg-white text-red-600 border-slate-200 hover:bg-red-600 hover:text-white'
+                            }`}
                             title="Excluir"
                         >
-                            🗑️
+                            {isDeleting ? <Loader2 size={16} className="animate-spin" /> : '🗑️'}
                         </button>
                     </div>
                 </div>

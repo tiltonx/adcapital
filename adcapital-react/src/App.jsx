@@ -135,6 +135,9 @@ function App() {
   const currentHash = window.location.hash.toLowerCase();
   const currentHost = window.location.hostname.toLowerCase();
 
+  // 1. Sanitização do Token (Evita strings "null" ou "undefined" que quebram o fluxo)
+  const isValidToken = token && token !== 'null' && token !== 'undefined' && token.length > 10;
+  
   // 1. Detecção de Portal de Cadastro (Prioridade para o subdomínio ou hash específico)
   const isPortal = 
     currentHost.startsWith('cadastro.') || 
@@ -156,7 +159,7 @@ function App() {
   }
 
   // 3. Sistema Administrativo (Exige Login)
-  if (!token) {
+  if (!isValidToken) {
     // Se o usuário estiver no subdomínio sistema, mostra login. 
     // Caso contrário (domínios genéricos ou IP), mostra o site por segurança/SEO.
     if (currentHost.startsWith('sistema.') || currentHost === 'localhost' || currentHash.includes('sistema') || currentHash.includes('admin')) {

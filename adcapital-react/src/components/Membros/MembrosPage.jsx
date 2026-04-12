@@ -20,6 +20,7 @@ export default function MembrosPage({
   const [mostrarModal, setMostrarModal] = useState(false);
   const [membroParaEditar, setMembroParaEditar] = useState(null);
   const [viewType, setViewType] = useState('grid'); // 'grid' ou 'list'
+  const [deletandoId, setDeletandoId] = useState(null);
 
   const abrirNovo = () => {
     setMembroParaEditar(null);
@@ -33,12 +34,15 @@ export default function MembrosPage({
 
   const handleExcluir = async (id) => {
     if (window.confirm('Deseja realmente excluir este membro?')) {
+      setDeletandoId(id);
       try {
         await membroService.excluir(id);
         await carregarDados();
-        alert('Membro excluído com sucesso!');
       } catch (err) {
+        console.error(err);
         alert('Erro técnico ao excluir.');
+      } finally {
+        setDeletandoId(null);
       }
     }
   };
@@ -99,6 +103,7 @@ export default function MembrosPage({
                 graus={graus}
                 onEdit={() => abrirEdicao(m)}
                 onDelete={() => handleExcluir(m.id)}
+                deletandoId={deletandoId}
               />
             ))}
           </div>
@@ -107,6 +112,7 @@ export default function MembrosPage({
             membros={membrosFiltrados} 
             onEdit={abrirEdicao} 
             onDelete={handleExcluir} 
+            deletandoId={deletandoId}
           />
         )}
       </div>

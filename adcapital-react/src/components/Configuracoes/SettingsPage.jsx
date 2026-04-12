@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import configuracaoService from '../../api/configuracaoService';
 import { 
   Globe, 
-  Image as ImageIcon, 
+  ImageIcon, 
   Calendar, 
   Save, 
   Trash2, 
@@ -13,13 +13,13 @@ import {
   Info,
   Settings,
   ShieldAlert,
-  Image,
   Layers,
   Loader2,
   CheckCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import StatusView from '../Common/StatusView';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -32,6 +32,7 @@ export default function SettingsPage() {
   const [categoriasSaida, setCategoriasSaida] = useState([]);
   const [portalConfig, setPortalConfig] = useState({ is_ativo: true, pergunta: '', resposta: '' });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Estados Site
   const [siteConfig, setSiteConfig] = useState({
@@ -54,6 +55,7 @@ export default function SettingsPage() {
   const carregarDados = async () => {
     try {
       setLoading(true);
+      setError(false);
       const [fRes, cRes, pRes, sRes, gRes, pgRes] = await Promise.all([
         configuracaoService.listarFuncoes(),
         configuracaoService.listarCategorias(),
@@ -72,6 +74,7 @@ export default function SettingsPage() {
       setGaleria(gRes.data);
     } catch (err) {
       console.error("Erro ao carregar configurações:", err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -192,10 +195,15 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading && !siteConfig) return <div className="p-8 text-center font-black animate-pulse">CARREGANDO...</div>;
-
   return (
-    <div className="flex flex-col md:flex-row gap-8 min-h-[80vh] p-4 text-slate-800">
+    <div className="flex flex-col md:flex-row gap-8 min-h-[80vh] p-4 text-slate-800 relative">
+      <StatusView 
+        loading={loading && !siteConfig.pastor_nome} 
+        error={error} 
+        onRetry={carregarDados} 
+        message="Falha nas Configurações"
+        subMessage="O servidor pode estar em Cold Start. Tente reconectar para carregar as opções administrativas."
+      />
       
       <aside className="w-full md:w-64 space-y-2">
         <button onClick={() => setAba('geral')} className={cn("w-full p-4 rounded-3xl flex items-center gap-3 transition-all font-black text-xs uppercase tracking-widest", aba === 'geral' ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400 border border-slate-100 hover:bg-slate-50")}>

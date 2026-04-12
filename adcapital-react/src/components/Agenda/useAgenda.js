@@ -4,15 +4,18 @@ import api from '../../api/config';
 export function useAgenda() {
   const [eventos, setEventos] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [error, setError] = useState(false);
   const [syncStatus, setSyncStatus] = useState({ status: 'loading', message: '' });
 
   const buscarEventos = useCallback(async () => {
     setCarregando(true);
+    setError(false);
     try {
       const response = await api.get('/agenda/eventos/');
       setEventos(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar eventos:", error);
+    } catch (err) {
+      console.error("Erro ao buscar eventos:", err);
+      setError(true);
     } finally {
       setCarregando(false);
     }
@@ -96,6 +99,7 @@ export function useAgenda() {
   return { 
     eventos, 
     carregando, 
+    error,
     syncStatus, 
     buscarEventos, 
     verificarStatus, 

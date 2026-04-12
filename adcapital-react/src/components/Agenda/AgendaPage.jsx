@@ -5,15 +5,21 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import StatusView from '../Common/StatusView';
+import { Loader2 } from 'lucide-react';
 
 export default function AgendaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' ou 'list'
   const [loadingSync, setLoadingSync] = useState(false);
+  const [deletandoId, setDeletandoId] = useState(null);
+
   const { 
     eventos, 
     carregando, 
+    error,
     syncStatus, 
+    buscarEventos,
     criarEvento, 
     deletarEvento, 
     editarEvento, 
@@ -52,10 +58,25 @@ export default function AgendaPage() {
     borderColor: 'transparent'
   }));
 
-  const handleEventClick = (info) => {
-    const ev = info.event.extendedProps;
+  const handleEventClick = async (info) => {
     if (window.confirm(`Deseja excluir o evento "${info.event.title}"?`)) {
-      deletarEvento(info.event.id);
+      setDeletandoId(info.event.id);
+      try {
+        await deletarEvento(info.event.id);
+      } finally {
+        setDeletandoId(null);
+      }
+    }
+  };
+
+  const handleExcluirLista = async (id) => {
+    if (window.confirm('Deseja realmente excluir este evento?')) {
+      setDeletandoId(id);
+      try {
+         await deletarEvento(id);
+      } finally {
+         setDeletandoId(null);
+      }
     }
   };
 
@@ -116,7 +137,15 @@ export default function AgendaPage() {
       </div>
 
       {/* Área Principal */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden min-h-[500px] relative">
+        <StatusView 
+           loading={carregando && eventos.length === 0} 
+           error={error} 
+           onRetry={buscarEventos} 
+           message="Erro ao carregar agenda"
+           subMessage="Houve um problema ao conectar com o servidor da agenda."
+        />
+
         {carregando && eventos.length === 0 ? (
            <div className="p-12 text-center text-slate-400 font-bold animate-pulse">Sincronizando com o Google...</div>
         ) : viewMode === 'list' ? (
@@ -126,7 +155,13 @@ export default function AgendaPage() {
               <EmptyState />
             ) : (
               eventos.map((ev) => (
-                <ListItem key={ev.id} ev={ev} deletarEvento={deletarEvento} editarEvento={editarEvento} />
+                <ListItem 
+                  key={ev.id} 
+                  ev={ev} 
+                  deletarEvento={handleExcluirLista} 
+                  editarEvento={editarEvento} 
+                  deletandoId={deletandoId}
+                />
               ))
             )}
           </div>
@@ -183,11 +218,13 @@ function EmptyState() {
   );
 }
 
-function ListItem({ ev, deletarEvento, editarEvento }) {
+function ListItem({ ev, deletarEvento, editarEvento, deletandoId }) {
+  const isDeleting = deletandoId === ev.id;
+  
   return (
-    <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50 transition-colors">
+    <div className={`p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all ${isDeleting ? 'bg-rose-50 opacity-60' : 'hover:bg-slate-50'}`}>
       <div className="flex-1">
-        <h3 className="text-xl font-bold text-slate-800">{ev.titulo}</h3>
+        <h3 className={`text-xl font-bold transition-all ${isDeleting ? 'text-slate-400 italic' : 'text-slate-800'}`}>{ev.titulo}</h3>
         {ev.descricao && <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">{ev.descricao}</p>}
         
         <div className="flex flex-wrap gap-3 mt-4 text-xs font-bold">
@@ -204,7 +241,8 @@ function ListItem({ ev, deletarEvento, editarEvento }) {
           ) : (
             <button 
               onClick={() => editarEvento(ev.id, ev)}
-              className="text-amber-700 bg-amber-50 px-3 pt-1 pb-0.5 rounded-xl flex items-center gap-1 hover:bg-amber-100 transition-colors"
+              disabled={isDeleting}
+              className="text-amber-700 bg-amber-50 px-3 pt-1 pb-0.5 rounded-xl flex items-center gap-1 hover:bg-amber-100 transition-colors disabled:opacity-50"
             >
               Não Sincronizado (Tentar Agora 🔄)
             </button>
@@ -214,9 +252,21 @@ function ListItem({ ev, deletarEvento, editarEvento }) {
       
       <button
         onClick={() => deletarEvento(ev.id)}
-        className="px-5 py-2.5 bg-red-50 text-red-600 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-red-100 transition-colors active:scale-95 whitespace-nowrap self-start md:self-center"
+        disabled={isDeleting}
+        className={`px-5 py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-95 whitespace-nowrap self-start md:self-center flex items-center gap-2 ${
+          isDeleting 
+            ? 'bg-blue-100 text-blue-600' 
+            : 'bg-red-50 text-red-600 hover:bg-red-100'
+        }`}
       >
-        Excluir e Avisar
+        {isDeleting ? (
+          <>
+            <Loader2 size={14} className="animate-spin" />
+            Excluindo...
+          </>
+        ) : (
+          'Excluir e Avisar'
+        )}
       </button>
     </div>
   );
