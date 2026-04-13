@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'https://api.adcapitaligreja.com.br/api',
-    timeout: 30000 // Aumentado para 30s para suportar "Cold Starts" do Render
+    timeout: 90000 // Aumentado para 90s para suportar "Cold Starts" do Render e envio de e-mails LGPD com anexo
 });
 
 api.interceptors.request.use(config => {
