@@ -67,6 +67,8 @@ def auto_cadastro_direto(request):
         else:
             # Caso FormData (upload de arquivos) ou form-url-encoded
             data = request.POST.dict()
+            if request.FILES:
+                data.update(request.FILES.dict())
         
         # Validação de segurança redundante
         config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
@@ -83,9 +85,9 @@ def auto_cadastro_direto(request):
         
         # Usamos o Serializer manualmente (apenas para validação/salvamento)
         if membro_existente:
-            serializer = MembroSerializer(membro_existente, data=data, files=request.FILES, partial=True)
+            serializer = MembroSerializer(membro_existente, data=data, partial=True)
         else:
-            serializer = MembroSerializer(data=data, files=request.FILES)
+            serializer = MembroSerializer(data=data)
 
         if serializer.is_valid():
             membro = serializer.save()
