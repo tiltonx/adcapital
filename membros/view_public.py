@@ -106,26 +106,19 @@ def auto_cadastro_direto(request):
                 membro.lgpd_documento.save(nome_arquivo, pdf_file, save=False)
                 membro.save()
 
-                # Enviar por e-mail
+                # Enviar por e-mail via Resend API
                 if membro.email:
                     try:
-                        from django.core.mail import EmailMessage
-                        from django.conf import settings
-                        
-                        email_msg = EmailMessage(
+                        from .utils import enviar_email_resend_api
+                        enviar_email_resend_api(
+                            to=membro.email,
                             subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
                             body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
-                            from_email=settings.EMAIL_HOST_USER,
-                            to=[membro.email],
+                            filename=nome_arquivo,
+                            file_content=pdf_file.read()
                         )
-                        
-                        # Anexar o PDF
-                        if pdf_file:
-                             email_msg.attach(nome_arquivo, pdf_file.read(), 'application/pdf')
-                             
-                        email_msg.send(fail_silently=True)
                     except Exception as email_err:
-                        print(f"Erro ao enviar e-mail LGPD para {membro.email}: {email_err}")
+                        print(f"Erro ao enviar via Resend: {email_err}")
             except Exception as lgpd_err:
                 # Loga o erro mas NÃO quebra o request de cadastro
                 print(f"AVISO: Falha na lógica LGPD (Cadastro salvo no entanto): {lgpd_err}")

@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .utils import gerar_termo_lgpd_pdf
+from .utils import gerar_termo_lgpd_pdf, enviar_email_resend_api
 from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal, ConfiguracaoSite, FotoGaleria
 from .serializers import MembroSerializer, ConfiguracaoPortalSerializer, ConfiguracaoSiteSerializer, FotoGaleriaSerializer
 
@@ -226,20 +226,20 @@ def _executar_tarefas_pos_cadastro(membro_id, parentescos_data):
         pdf_bytes = pdf_file.read()
         print(f"--- [BG-THREAD] PDF Gerado ({len(pdf_bytes)} bytes)")
 
-        # 2. Envio de E-mail (Prioritário)
+        # 2. Envio de E-mail via Resend API (Bypass SMTP Block)
         if membro.email:
-            print(f"--- [BG-THREAD] Tentando enviar e-mail para {membro.email}...")
-            email_msg = EmailMessage(
+            print(f"--- [BG-THREAD] Usando Resend API para {membro.email}...")
+            sucesso = enviar_email_resend_api(
+                to=membro.email,
                 subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
                 body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
-                from_email=settings.EMAIL_HOST_USER,
-                to=[membro.email],
+                filename=nome_arquivo,
+                file_content=pdf_bytes
             )
-            email_msg.attach(nome_arquivo, pdf_bytes, 'application/pdf')
-            
-            # Usamos uma conexão SMTP explícita para podermos logar melhor (opcional, mas EmailMessage.send já faz isso)
-            email_msg.send(fail_silently=False)
-            print("--- [BG-THREAD] E-mail enviado com sucesso.")
+            if sucesso:
+                print("--- [BG-THREAD] E-mail enviado com sucesso via Resend.")
+            else:
+                print("--- [BG-THREAD] AVISO: Falha no envio via Resend. Verifique logs acima.")
 
         # 3. Salvamento no Cloudinary (Operação externa que pode ser lenta)
         print(f"--- [BG-THREAD] Salvando PDF no Cloudinary...")

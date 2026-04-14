@@ -1,4 +1,8 @@
 import io
+import os
+import json
+import base64
+import requests
 from django.core.files.base import ContentFile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -98,3 +102,53 @@ def gerar_termo_lgpd_pdf(membro):
     
     nome_arquivo = f"termo_lgpd_{membro.cpf}.pdf"
     return nome_arquivo, ContentFile(buffer.read())
+
+def enviar_email_resend_api(to, subject, body, filename=None, file_content=None):
+    """
+    Envia um e-mail usando a API do Resend via HTTPS (Bypassa o bloqueio de SMTP do Render Free).
+    """
+    api_key = os.environ.get('RESEND_API_KEY')
+    if not api_key:
+        print("--- [RESEND] ERRO: RESEND_API_KEY não configurada no ambiente.")
+        return False
+
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    # Conversão de quebras de linha para HTML
+    html_body = f"<p style='font-family: sans-serif;'>{body.replace('\n', '<br>')}</p>"
+
+    payload = {
+        "from": "AD Capital <onboarding@resend.dev>",
+        "to": [to],
+        "subject": subject,
+        "html": html_body,
+    }
+
+    if filename and file_content:
+        # Resend espera conteúdo em Base64 para anexos
+        encoded_content = base64.b64encode(file_content).decode("utf-8")
+        payload["attachments"] = [
+            {
+                "content": encoded_content,
+                "filename": filename,
+            }
+        ]
+
+    try:
+        print(f"--- [RESEND] Enviando requisição para {to}...")
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        result = response.json()
+        
+        if response.status_code in [200, 201]:
+            print(f"--- [RESEND] E-mail enviado com sucesso! ID: {result.get('id')}")
+            return True
+        else:
+            print(f"--- [RESEND] ERRO da API: {result}")
+            return False
+    except Exception as e:
+        print(f"--- [RESEND] ERRO de conexão: {e}")
+        return False
