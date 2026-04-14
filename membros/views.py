@@ -1,10 +1,7 @@
-import json
-from rest_framework import viewsets
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+import threading
+from django.core.mail import EmailMessage
+from django.conf import settings
+from .utils import gerar_termo_lgpd_pdf
 from .models import Membro, Parentesco, Funcao, ConfiguracaoPortal, ConfiguracaoSite, FotoGaleria
 from .serializers import MembroSerializer, ConfiguracaoPortalSerializer, ConfiguracaoSiteSerializer, FotoGaleriaSerializer
 
@@ -71,7 +68,14 @@ def buscar_opcoes_parentesco(request):
 @authentication_classes([])
 def buscar_configuracao_publica(request):
     """Retorna apenas o status e a pergunta do portal para o público"""
-    config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
+    # Usamos filter(id=1).first() para evitar escrita desnecessária e deadlock
+    config = ConfiguracaoPortal.objects.filter(id=1).first()
+    if not config:
+        # Fallback em memória se o registro sumir
+        return Response({
+            "is_ativo": True,
+            "pergunta": "Qual o seu melhor amigo?"
+        })
     return Response({
         "is_ativo": config.is_ativo,
         "pergunta": config.pergunta
@@ -83,12 +87,13 @@ def buscar_configuracao_publica(request):
 def verificar_resposta_portal(request):
     """Verifica se a resposta do membro está correta para liberar o formulário"""
     resposta_user = request.data.get('resposta', '').strip().lower()
-    config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
+    config = ConfiguracaoPortal.objects.filter(id=1).first()
     
-    # Se por algum motivo a resposta no banco estiver vazia, usamos o padrão "Jesus"
-    resposta_correta = (config.resposta or "Jesus").strip().lower()
+    # Se por algum motivo a resposta no banco estiver vazia ou objeto inexistente, usamos o padrão "Jesus"
+    resposta_correta = (config.resposta if config else "Jesus").strip().lower()
+    is_ativo = config.is_ativo if config else True
 
-    if not config.is_ativo:
+    if not is_ativo:
         return Response({"error": "O portal de cadastro está desativado no momento."}, status=403)
         
     if resposta_user == resposta_correta:
@@ -197,6 +202,58 @@ class MembroViewSet(viewsets.ModelViewSet):
                     defaults={'grau': grau}
                 )
 
+def _executar_tarefas_pos_cadastro(membro_id, parentescos_data):
+    """
+    Executa tarefas pesadas (PDF, Cloudinary, E-mail) em background
+    para evitar timeout na resposta HTTP.
+    """
+    try:
+        from .models import Membro, Parentesco
+        membro = Membro.objects.get(id=membro_id)
+
+        # 1. Lógica LGPD (Geração de PDF e Upload)
+        print(f"--- [BG-THREAD] Iniciando LGPD para {membro.nome} ---")
+        membro.lgpd_consentido = True
+        from django.utils import timezone
+        if not membro.lgpd_data_aceite:
+            membro.lgpd_data_aceite = timezone.now()
+        
+        nome_arquivo, pdf_file = gerar_termo_lgpd_pdf(membro)
+        membro.lgpd_documento.save(nome_arquivo, pdf_file, save=True)
+        print(f"--- [BG-THREAD] PDF salvo com sucesso.")
+
+        # 2. Envio de E-mail
+        if membro.email:
+            print(f"--- [BG-THREAD] Enviando e-mail para {membro.email}...")
+            email_msg = EmailMessage(
+                subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
+                body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
+                from_email=settings.EMAIL_HOST_USER,
+                to=[membro.email],
+            )
+            pdf_file.seek(0)
+            email_msg.attach(nome_arquivo, pdf_file.read(), 'application/pdf')
+            email_msg.send(fail_silently=True)
+            print("--- [BG-THREAD] E-mail enviado.")
+
+        # 3. Lógica de Parentesco (Se houver)
+        if parentescos_data:
+            print("--- [BG-THREAD] Processando parentescos...")
+            for item in parentescos_data:
+                p_id = item.get('parente_id') or item.get('membro_destino')
+                grau = item.get('grau')
+                if p_id and grau and str(p_id) != str(membro.id):
+                    if Membro.objects.filter(id=p_id).exists():
+                        Parentesco.objects.get_or_create(
+                            membro_origem=membro,
+                            membro_destino_id=p_id,
+                            defaults={'grau': grau}
+                        )
+            print("--- [BG-THREAD] Parentescos processados.")
+
+    except Exception as e:
+        print(f"--- [BG-THREAD] ERRO EM TAREFAS DE BACKGROUND: {e}")
+
 class AutoCadastroMembroView(APIView):
     """
     Endpoint para auto-cadastro de membros.
@@ -209,138 +266,65 @@ class AutoCadastroMembroView(APIView):
     def post(self, request):
         print("--- [DEBUG] Iniciando AutoCadastroMembroView.post ---")
         try:
-            print(f"--- [DEBUG] Buscando configuração do portal...")
-            config, _ = ConfiguracaoPortal.objects.get_or_create(id=1)
-            if not config.is_ativo:
-                print("--- [DEBUG] Portal desativado.")
+            config = ConfiguracaoPortal.objects.filter(id=1).first()
+            is_ativo = config.is_ativo if config else True
+            if not is_ativo:
                 return Response({"error": "Portal desativado"}, status=403)
 
-            # Verifica resposta de segurança novamente no servidor
-            print("--- [DEBUG] Verificando resposta de segurança...")
             resposta_user = request.data.get('sync_resposta', '').strip().lower()
-            resposta_correta = (config.resposta or "Jesus").strip().lower()
+            resposta_correta = (config.resposta if config else "Jesus").strip().lower()
 
             if resposta_user != resposta_correta:
-                 print(f"--- [DEBUG] Resposta incorreta: {resposta_user} != {resposta_correta}")
                  return Response({"error": "Acesso negado: Resposta incorreta."}, status=401)
 
-            print("--- [DEBUG] Validando CPF...")
             cpf_original = request.data.get('cpf')
             if not cpf_original:
                 return Response({"error": "CPF é obrigatório"}, status=400)
 
-            # Limpa o CPF para busca
             cpf_limpo = "".join(filter(str.isdigit, cpf_original))
-            
-            # Busca se o membro já existe
-            print(f"--- [DEBUG] Buscando membro existente (CPF: {cpf_limpo})...")
             membro_existente = Membro.objects.filter(cpf=cpf_limpo).first()
             
             if membro_existente:
-                print(f"--- [DEBUG] Membro encontrado (ID: {membro_existente.id}). Atualizando...")
                 serializer = MembroSerializer(membro_existente, data=request.data, partial=True)
             else:
-                print("--- [DEBUG] Novo membro. Criando...")
                 serializer = MembroSerializer(data=request.data)
 
-            print("--- [DEBUG] Validando serializer...")
             if serializer.is_valid():
-                print("--- [DEBUG] Serializer válido. Salvando membro no banco...")
+                # SALVAMENTO IMEDIATO DO DISCO/INFOS BÁSICAS
                 membro = serializer.save()
                 
-                print(f"--- [DEBUG] Membro salvo (ID: {membro.id}). Iniciando lógica LGPD...")
-                # --- START LGPD LOGIC (Resilient) ---
-                try:
-                    # Set consent true as it's required in the frontend
-                    membro.lgpd_consentido = True
-                    if not membro.lgpd_data_aceite:
-                         from django.utils import timezone
-                         membro.lgpd_data_aceite = timezone.now()
-                    
-                    # Generate PDF if it doesn't exist
-                    print("--- [DEBUG] Gerando PDF LGPD...")
-                    from .utils import gerar_termo_lgpd_pdf
-                    nome_arquivo, pdf_file = gerar_termo_lgpd_pdf(membro)
-                    print(f"--- [DEBUG] Salvando PDF no Cloudinary ({nome_arquivo})...")
-                    membro.lgpd_documento.save(nome_arquivo, pdf_file, save=False)
-                    membro.save()
-
-                    # Enviar por e-mail
-                    if membro.email:
-                        print(f"--- [DEBUG] Enviando e-mail para {membro.email}...")
-                        try:
-                            from django.core.mail import EmailMessage
-                            from django.conf import settings
-                            
-                            email_msg = EmailMessage(
-                                subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
-                                body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
-                                from_email=settings.EMAIL_HOST_USER,
-                                to=[membro.email],
-                            )
-                            
-                            # Anexar o PDF
-                            if membro.lgpd_documento:
-                                 membro.lgpd_documento.seek(0)
-                                 email_msg.attach(nome_arquivo, membro.lgpd_documento.read(), 'application/pdf')
-                                 
-                            email_msg.send(fail_silently=True)
-                            print("--- [DEBUG] E-mail enviado (ou falha silenciosa).")
-                        except Exception as email_err:
-                            print(f"--- [DEBUG] Erro ao enviar e-mail: {email_err}")
-                except Exception as lgpd_err:
-                    # Loga o erro mas NÃO quebra o request de cadastro
-                    print(f"--- [DEBUG] AVISO: Falha na lógica LGPD: {lgpd_err}")
-                # --- END LGPD LOGIC ---
-
-                # Lógica simplificada de parentesco para o auto-cadastro
-                print("--- [DEBUG] Processando parentescos...")
-                parentescos_data = request.data.get('parentescos_novo', [])
-
-                # Se vier de um FormData como string JSON
-                if isinstance(parentescos_data, str):
+                # Dados de parentesco
+                parentescos_raw = request.data.get('parentescos_novo', [])
+                if isinstance(parentescos_raw, str) and parentescos_raw:
                     try:
-                        parentescos_data = json.loads(parentescos_data)
+                        parentescos_data = json.loads(parentescos_raw)
                     except:
                         parentescos_data = []
-                if membro_existente:
-                    Parentesco.objects.filter(membro_origem=membro).delete()
-                
-                for item in parentescos_data:
-                    p_id = item.get('parente_id') or item.get('membro_destino')
-                    grau = item.get('grau')
-                    if p_id and grau and str(p_id) != str(membro.id):
-                        # Verifica se o parente realmente existe para evitar erro de integridade (ForeignKey)
-                        if Membro.objects.filter(id=p_id).exists():
-                            Parentesco.objects.get_or_create(
-                                membro_origem=membro,
-                                membro_destino_id=p_id,
-                                defaults={'grau': grau}
-                            )
-                
-                print("--- [DEBUG] Cadastro concluído com sucesso!")
+                else:
+                    parentescos_data = parentescos_raw
+
+                # DISPARA TAREFAS PESADAS EM THREAD SEPARADA
+                print(f"--- [DEBUG] Disparando tarefas de background para membro {membro.id} ---")
+                thread = threading.Thread(
+                    target=_executar_tarefas_pos_cadastro,
+                    args=(membro.id, parentescos_data)
+                )
+                thread.start()
+
                 return Response({
                     "success": True, 
-                    "message": "Cadastro realizado/atualizado com sucesso!",
+                    "message": "Cadastro recebido! O processamento do seu termo LGPD está sendo finalizado em segundo plano.",
                     "id": membro.id,
-                    "is_update": membro_existente is not None,
-                    "lgpd_url": membro.lgpd_documento.url if membro.lgpd_documento else None
+                    "is_update": membro_existente is not None
                 })
             
-            print(f"--- [DEBUG] Serializer INVÁLIDO: {serializer.errors}")
             return Response(serializer.errors, status=400)
         
         except Exception as e:
-            # LOG DE ERRO CRITICO (Isso vai aparecer nos logs do Render)
             print(f"--- [DEBUG] !!! ERRO CRÍTICO !!!: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            
-            # Retornamos JSON em vez de HTML para não quebrar o CORS no frontend
             return Response({
-                "error": "Erro interno no servidor ao processar cadastro.",
-                "detail": str(e),
-                "help": "Verifique se todos os campos obrigatórios estão preenchidos corretamente."
+                "error": "Erro interno no servidor.",
+                "detail": str(e)
             }, status=500)
 
 @api_view(['GET'])
