@@ -126,6 +126,7 @@ def enviar_email_resend_api(to, subject, body, filename=None, file_content=None)
 
     payload = {
         "from": "AD Capital <noreply@adcapitaligreja.com.br>",
+        "reply_to": "igrejaadcapital@gmail.com",
         "to": [to],
         "subject": subject,
         "html": html_body,
