@@ -111,6 +111,9 @@ def enviar_email_resend_api(to, subject, body, filename=None, file_content=None)
     if not api_key:
         print("--- [RESEND] ERRO: RESEND_API_KEY não configurada no ambiente.")
         return False
+    
+    # Log para depuração (ofuscado por segurança)
+    print(f"--- [RESEND] Verificando chave (Início: {api_key[:7]}... Fim: {api_key[-4:]})")
 
     url = "https://api.resend.com/emails"
     headers = {
