@@ -1,7 +1,9 @@
 import threading
 import json
+import traceback
 from django.core.mail import EmailMessage
 from django.conf import settings
+from django.core.files.base import ContentFile
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -211,39 +213,46 @@ class MembroViewSet(viewsets.ModelViewSet):
 
 def _executar_tarefas_pos_cadastro(membro_id, parentescos_data):
     """
-    Executa tarefas pesadas (PDF, Cloudinary, E-mail) em background
-    para evitar timeout na resposta HTTP.
+    Executa tarefas pesadas em background. 
+    Prioriza o E-mail e captura os bytes do PDF imediatamente para evitar erros de arquivo fechado.
     """
     try:
         from .models import Membro, Parentesco
         membro = Membro.objects.get(id=membro_id)
 
-        # 1. Lógica LGPD (Geração de PDF e Upload)
-        print(f"--- [BG-THREAD] Iniciando LGPD para {membro.nome} ---")
-        membro.lgpd_consentido = True
-        from django.utils import timezone
-        if not membro.lgpd_data_aceite:
-            membro.lgpd_data_aceite = timezone.now()
-        
+        # 1. Geração de PDF e Captura Imediata de Bytes
+        print(f"--- [BG-THREAD] Iniciando processamento para {membro.nome} ---")
         nome_arquivo, pdf_file = gerar_termo_lgpd_pdf(membro)
-        membro.lgpd_documento.save(nome_arquivo, pdf_file, save=True)
-        print(f"--- [BG-THREAD] PDF salvo com sucesso.")
+        pdf_bytes = pdf_file.read()
+        print(f"--- [BG-THREAD] PDF Gerado ({len(pdf_bytes)} bytes)")
 
-        # 2. Envio de E-mail
+        # 2. Envio de E-mail (Prioritário)
         if membro.email:
-            print(f"--- [BG-THREAD] Enviando e-mail para {membro.email}...")
+            print(f"--- [BG-THREAD] Tentando enviar e-mail para {membro.email}...")
             email_msg = EmailMessage(
                 subject='Bem-vindo! Seu Termo de Ciência e Aceite (LGPD)',
                 body=f'Olá {membro.nome},\n\nSeu cadastro no portal da Igreja Assembleia de Deus Ministério na Capital foi realizado com sucesso!\n\nEm anexo, enviamos a sua via do Termo de Consentimento de Dados Pessoais (LGPD) assinado eletronicamente no ato do seu cadastro.\n\nAtenciosamente,\nEquipe AD Capital',
                 from_email=settings.EMAIL_HOST_USER,
                 to=[membro.email],
             )
-            pdf_file.seek(0)
-            email_msg.attach(nome_arquivo, pdf_file.read(), 'application/pdf')
-            email_msg.send(fail_silently=True)
-            print("--- [BG-THREAD] E-mail enviado.")
+            email_msg.attach(nome_arquivo, pdf_bytes, 'application/pdf')
+            
+            # Usamos uma conexão SMTP explícita para podermos logar melhor (opcional, mas EmailMessage.send já faz isso)
+            email_msg.send(fail_silently=False)
+            print("--- [BG-THREAD] E-mail enviado com sucesso.")
 
-        # 3. Lógica de Parentesco (Se houver)
+        # 3. Salvamento no Cloudinary (Operação externa que pode ser lenta)
+        print(f"--- [BG-THREAD] Salvando PDF no Cloudinary...")
+        membro.lgpd_documento.save(nome_arquivo, ContentFile(pdf_bytes), save=True)
+        
+        membro.lgpd_consentido = True
+        from django.utils import timezone
+        if not membro.lgpd_data_aceite:
+            membro.lgpd_data_aceite = timezone.now()
+        membro.save()
+        print(f"--- [BG-THREAD] Dados LGPD atualizados no banco.")
+
+        # 4. Lógica de Parentesco
         if parentescos_data:
             print("--- [BG-THREAD] Processando parentescos...")
             for item in parentescos_data:
@@ -258,8 +267,9 @@ def _executar_tarefas_pos_cadastro(membro_id, parentescos_data):
                         )
             print("--- [BG-THREAD] Parentescos processados.")
 
-    except Exception as e:
-        print(f"--- [BG-THREAD] ERRO EM TAREFAS DE BACKGROUND: {e}")
+    except Exception:
+        print("--- [BG-THREAD] ERRO CRÍTICO EM TAREFAS DE BACKGROUND ---")
+        traceback.print_exc()
 
 class AutoCadastroMembroView(APIView):
     """

@@ -1,9 +1,9 @@
 import StatusView from '../Common/StatusView';
 
 export default function DashboardHome({ totalMembros, saldoBancario, entradas, saidas, irParaMembros, irParaFinanceiro, loading, error, retry }) {
-    if (error && !loading) {
-        return <StatusView error={error} onRetry={retry} />;
-    }
+  if (error && !loading) {
+    return <StatusView error={error} onRetry={retry} />;
+  }
 
   const dados = [
     { label: 'Entradas', valor: entradas || 0, cor: 'bg-emerald-500' },
@@ -12,11 +12,11 @@ export default function DashboardHome({ totalMembros, saldoBancario, entradas, s
 
   const maiorValor = Math.max(...dados.map(d => d.valor), 1);
 
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500 relative">
-            <StatusView loading={loading} />
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500 relative">
+      <StatusView loading={loading} />
       <div className="bg-blue-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
-        <h1 className="text-4xl font-black tracking-tighter mb-2 italic">Olá, Analista! 👋</h1>
+        <h1 className="text-4xl font-black tracking-tighter mb-2 italic">A paz do Senhor! 👋</h1>
         <p className="text-blue-200 font-medium">O sistema está operacional com dados financeiros reais.</p>
       </div>
 
@@ -54,4 +54,4 @@ export default function DashboardHome({ totalMembros, saldoBancario, entradas, s
       </div>
     </div>
   );
-}
+}

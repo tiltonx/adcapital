@@ -121,7 +121,6 @@ def auto_cadastro_direto(request):
                         
                         # Anexar o PDF
                         if pdf_file:
-                             pdf_file.seek(0)
                              email_msg.attach(nome_arquivo, pdf_file.read(), 'application/pdf')
                              
                         email_msg.send(fail_silently=True)
