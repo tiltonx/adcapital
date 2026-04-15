@@ -48,6 +48,7 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                     <input
                         className="p-3 border border-slate-200 rounded-xl font-mono"
                         placeholder="(00) 00000-0000"
+                        maxLength={20}
                         value={formData.telefone || ''}
                         onChange={e => handleChange('telefone', aplicarMascaraTelefone(e.target.value))}
                     />
@@ -58,6 +59,8 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                     <input
                         type="date"
                         className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        max={new Date().toISOString().split('T')[0]}
+                        min="1900-01-01"
                         value={formData.data_nascimento || ''}
                         onChange={e => handleChange('data_nascimento', e.target.value)}
                     />
@@ -213,42 +216,49 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                     <input
                         className="md:col-span-2 p-3 border border-slate-200 rounded-xl"
                         placeholder="Logradouro"
+                        maxLength={255}
                         value={formData.logradouro || ''}
                         onChange={e => handleChange('logradouro', e.target.value)}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="Nº"
+                        maxLength={20}
                         value={formData.numero || ''}
                         onChange={e => handleChange('numero', e.target.value)}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="Complemento"
+                        maxLength={100}
                         value={formData.complemento || ''}
                         onChange={e => handleChange('complemento', e.target.value)}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="Bairro"
+                        maxLength={100}
                         value={formData.bairro || ''}
                         onChange={e => handleChange('bairro', e.target.value)}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="Cidade"
+                        maxLength={100}
                         value={formData.cidade || ''}
                         onChange={e => handleChange('cidade', e.target.value)}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="UF"
+                        maxLength={2}
                         value={formData.uf || ''}
-                        onChange={e => handleChange('uf', e.target.value)}
+                        onChange={e => handleChange('uf', e.target.value.toUpperCase())}
                     />
                     <input
                         className="p-3 border border-slate-200 rounded-xl"
                         placeholder="CEP"
+                        maxLength={10}
                         value={formData.cep || ''}
                         onChange={e => handleChange('cep', e.target.value)}
                     />
