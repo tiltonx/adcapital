@@ -49,7 +49,8 @@ export default function AutoCadastroPage() {
         nome: '', cpf: '', email: '', telefone: '',
         genero: 'M', estado_civil: 'SOLTEIRO',
         data_nascimento: '', naturalidade: '',
-        funcao: 'Membro', logradouro: '', numero: '',
+        funcao: 'Membro', data_entrada: '',
+        logradouro: '', numero: '',
         complemento: '', bairro: '', cidade: 'Brasília',
         uf: 'DF', cep: '', motivo_entrada: '', unidade: 'Sede',
         foto: null

@@ -137,18 +137,18 @@ export default function MembroFormFields({ formData, handleChange, funcoes, apli
                     )}
                 </div>
 
+                <div className="flex flex-col">
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Data de Entrada</label>
+                    <input
+                        type="date"
+                        className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={formData.data_entrada || ''}
+                        onChange={e => handleChange('data_entrada', e.target.value)}
+                    />
+                </div>
+
                 {!isPublic && (
                     <>
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Data de Entrada</label>
-                            <input
-                                type="date"
-                                className="p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.data_entrada || ''}
-                                onChange={e => handleChange('data_entrada', e.target.value)}
-                            />
-                        </div>
-
                         <div className="flex flex-col">
                             <label className="text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Data de Saída (Se aplicável)</label>
                             <input

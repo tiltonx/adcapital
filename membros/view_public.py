@@ -85,7 +85,10 @@ def auto_cadastro_direto(request):
         
         # Usamos o Serializer manualmente (apenas para validação/salvamento)
         if membro_existente:
-            serializer = MembroSerializer(membro_existente, data=data, partial=True)
+            # Filtramos campos vazios para não sobrescrever dados existentes com "nada"
+            # em um auto-cadastro (que se comporta como blind update parcial)
+            data_limpa = {k: v for k, v in data.items() if v not in [None, "", "null", "undefined"]}
+            serializer = MembroSerializer(membro_existente, data=data_limpa, partial=True)
         else:
             serializer = MembroSerializer(data=data)
 
@@ -120,20 +123,27 @@ def auto_cadastro_direto(request):
                 print(f"AVISO: Falha na lógica LGPD (Cadastro salvo no entanto): {lgpd_err}")
             # --- END LGPD LOGIC ---
 
-            # Lógica de Parentesco
-            parentescos_data = data.get('parentescos_novo', [])
-            if membro_existente:
-                Parentesco.objects.filter(membro_origem=membro).delete()
-            
-            for item in parentescos_data:
-                p_id = item.get('parente_id') or item.get('membro_destino')
-                grau = item.get('grau')
-                if p_id and grau and str(p_id) != str(membro.id):
-                    Parentesco.objects.get_or_create(
-                        membro_origem=membro,
-                        membro_destino_id=p_id,
-                        defaults={'grau': grau}
-                    )
+            # Lógica de Parentesco (Apenas se enviado, para evitar apagar o que já existe em um update parcial)
+            if 'parentescos_novo' in data:
+                parentescos_data = data.get('parentescos_novo', [])
+                if isinstance(parentescos_data, str):
+                    try:
+                        parentescos_data = json.loads(parentescos_data)
+                    except:
+                        parentescos_data = []
+
+                if membro_existente:
+                    Parentesco.objects.filter(membro_origem=membro).delete()
+                
+                for item in parentescos_data:
+                    p_id = item.get('parente_id') or item.get('membro_destino')
+                    grau = item.get('grau')
+                    if p_id and grau and str(p_id) != str(membro.id):
+                        Parentesco.objects.get_or_create(
+                            membro_origem=membro,
+                            membro_destino_id=p_id,
+                            defaults={'grau': grau}
+                        )
             
             return JsonResponse({
                 "success": True, 
